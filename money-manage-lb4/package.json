@@ -1,0 +1,73 @@
+{
+  "name": "money-manage-lb4",
+  "version": "0.0.1",
+  "description": "Money Manage",
+  "keywords": [
+    "loopback-application",
+    "loopback"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "engines": {
+    "node": "18 || 20 || 22"
+  },
+  "scripts": {
+    "build": "lb-tsc",
+    "build:watch": "lb-tsc --watch",
+    "lint": "npm run eslint && npm run prettier:check",
+    "lint:fix": "npm run eslint:fix && npm run prettier:fix",
+    "prettier:cli": "lb-prettier \"**/*.ts\" \"**/*.js\"",
+    "prettier:check": "npm run prettier:cli -- -l",
+    "prettier:fix": "npm run prettier:cli -- --write",
+    "eslint": "lb-eslint --report-unused-disable-directives .",
+    "eslint:fix": "npm run eslint -- --fix",
+    "pretest": "npm run rebuild",
+    "test": "lb-mocha --allow-console-logs \"dist/__tests__\"",
+    "posttest": "npm run lint",
+    "test:dev": "lb-mocha --allow-console-logs dist/__tests__/**/*.js && npm run posttest",
+    "docker:build": "docker build -t money-manage-lb4 .",
+    "docker:run": "docker run -p 3000:3000 -d money-manage-lb4",
+    "premigrate": "npm run build",
+    "migrate": "node ./dist/migrate",
+    "preopenapi-spec": "npm run build",
+    "openapi-spec": "node ./dist/openapi-spec",
+    "prestart": "npm run rebuild",
+    "start": "pm2 start ecosystem.config.js --env production",
+    "stop": "pm2 stop ecosystem.config.js --env production",
+    "clean": "lb-clean dist *.tsbuildinfo .eslintcache",
+    "rebuild": "npm run clean && npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "author": "trieunguyen23 <trieu.nguyen@pamobile.co>",
+  "license": "",
+  "files": [
+    "README.md",
+    "dist",
+    "src",
+    "!*/__tests__"
+  ],
+  "dependencies": {
+    "@loopback/authentication": "^12.0.11",
+    "@loopback/boot": "^7.0.11",
+    "@loopback/core": "^7.0.9",
+    "@loopback/repository": "^7.0.14",
+    "@loopback/rest": "^14.0.11",
+    "@loopback/rest-explorer": "^7.0.11",
+    "@loopback/service-proxy": "^7.0.11",
+    "dotenv": "^17.3.1",
+    "loopback-connector-mongodb": "^6.3.1",
+    "tslib": "^2.0.0"
+  },
+  "devDependencies": {
+    "@loopback/build": "^11.0.10",
+    "@loopback/eslint-config": "^15.0.5",
+    "@loopback/testlab": "^7.0.10",
+    "@types/node": "^16.18.126",
+    "eslint": "^8.57.1",
+    "source-map-support": "^0.5.21",
+    "typescript": "~5.2.2"
+  }
+}

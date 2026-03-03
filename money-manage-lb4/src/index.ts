@@ -1,0 +1,38 @@
+import {ApplicationConfig, MoneyMangeApplication} from './application';
+import * as dotenv from 'dotenv';
+export * from './application';
+import * as path from 'path';
+
+const envPath = path.resolve(__dirname, '../.env');
+console.log('📂 Loading .env from:', envPath);
+dotenv.config({path: envPath});
+
+export async function main(options: ApplicationConfig = {}) {
+  const app = new MoneyMangeApplication(options);
+  await app.boot();
+  await app.start();
+
+  const url = app.restServer.url;
+  console.log(`Server is running at ${url}`);
+  console.log(`Try ${url}/ping`);
+
+  return app;
+}
+
+if (require.main === module) {
+  // Run the application
+  const config = {
+    rest: {
+      port: +(process.env.PORT ?? 2305),
+      host: process.env.HOST,
+      gracePeriodForClose: 5000,
+      openApiSpec: {
+        setServersFromRequest: true,
+      },
+    },
+  };
+  main(config).catch(err => {
+    console.error('Cannot start the application.', err);
+    process.exit(1);
+  });
+}
