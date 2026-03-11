@@ -21,6 +21,12 @@ export class Category extends Entity {
   @property({
     type: 'string',
     required: true,
+  })
+  description: string;
+
+  @property({
+    type: 'string',
+    required: true,
     jsonSchema: {
       enum: Object.values(TransactionType),
     },
@@ -32,6 +38,12 @@ export class Category extends Entity {
     required: true,
   })
   created_at: string;
+
+  @property({
+    type: 'date',
+    required: true,
+  })
+  updated_at: string;
 
   @property({
     type: 'string',

@@ -3,6 +3,7 @@ import {juggler} from '@loopback/repository';
 
 const config = {
   name: 'MoneyManageDb',
+  database: 'MoneyManage',
   connector: 'mongodb',
   url: process.env.MONGO_URL,
   useNewUrlParser: true,

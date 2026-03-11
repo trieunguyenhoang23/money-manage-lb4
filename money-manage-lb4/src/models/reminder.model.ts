@@ -21,6 +21,12 @@ export class Reminder extends Entity {
     type: 'string',
     required: true,
   })
+  currency: string;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
   type: string;
 
   @property({
@@ -94,7 +100,7 @@ export class Reminder extends Entity {
     type: 'date',
     required: true,
   })
-  update_at: string;
+  updated_at: string;
 
   @property({
     type: 'string',

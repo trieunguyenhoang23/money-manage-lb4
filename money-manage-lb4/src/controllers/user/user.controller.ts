@@ -110,7 +110,7 @@ export class UserController {
     await this.userRepository.replaceById(id, user);
   }
 
-  //! Delete
+  //! DELETE
   @rest.del('/users/{id}')
   @rest.response(204, {
     description: 'User DELETE success',

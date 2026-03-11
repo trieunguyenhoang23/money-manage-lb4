@@ -29,6 +29,12 @@ export class Transaction extends Entity {
     type: 'string',
     required: true,
   })
+  currency: string;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
   note: string;
 
   @property({
@@ -47,7 +53,7 @@ export class Transaction extends Entity {
     type: 'date',
     required: true,
   })
-  update_at: string;
+  updated_at: string;
 
   @property({
     type: 'string',
