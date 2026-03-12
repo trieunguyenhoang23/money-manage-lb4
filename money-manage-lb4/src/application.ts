@@ -10,16 +10,15 @@ import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
 import {MySequence} from './sequence';
 import {VerifyAuthenticateUseCase} from './domain/usecase/user_auth/verify-authenticate.usecase';
-import {VERIFY_AUTH_USECASE} from './domain/usecase/binding_key.usecase';
-import {AuthenticationComponent} from '@loopback/authentication';
 import {
-  JWTAuthenticationComponent,
-  TokenServiceBindings,
-  RefreshTokenServiceBindings,
-  UserServiceBindings,
-} from '@loopback/authentication-jwt';
+  SYNC_USER_DATA_USECASE,
+  VERIFY_AUTH_USECASE,
+} from './domain/usecase/binding_key.usecase';
+import {AuthenticationComponent} from '@loopback/authentication';
+import * as auth from '@loopback/authentication-jwt';
 import {MoneyManageDbDataSource} from './datasources';
 import {RefreshTokenRepository} from './repositories/refresh-token.repository';
+import {SyncUserDataUseCase} from './domain/usecase/sync/sync-user-data.usecase';
 
 export {ApplicationConfig};
 
@@ -54,34 +53,35 @@ export class MoneyMangeApplication extends BootMixin(
 
     ///USE CASE Binding
     this.bind(VERIFY_AUTH_USECASE.key).toClass(VerifyAuthenticateUseCase);
+    this.bind(SYNC_USER_DATA_USECASE.key).toClass(SyncUserDataUseCase);
 
     /// JWT Config
     this.component(AuthenticationComponent);
-    this.component(JWTAuthenticationComponent);
+    this.component(auth.JWTAuthenticationComponent);
 
     // Bind the Refresh Token Repository to your DataSource
-    this.bind(RefreshTokenServiceBindings.REFRESH_REPOSITORY).toClass(
+    this.bind(auth.RefreshTokenServiceBindings.REFRESH_REPOSITORY).toClass(
       RefreshTokenRepository,
     );
 
     // Bind Secret
-    this.bind(TokenServiceBindings.TOKEN_SECRET).to(
+    this.bind(auth.TokenServiceBindings.TOKEN_SECRET).to(
       process.env.JWT_SECRET ?? 'fallback-secret-if-env-fails',
     );
 
     // Access Token Expiration (e.g., 1 hour)
-    this.bind(TokenServiceBindings.TOKEN_EXPIRES_IN).to(
+    this.bind(auth.TokenServiceBindings.TOKEN_EXPIRES_IN).to(
       process.env.JWT_EXPIRES_IN ?? '3600',
     );
 
-    this.bind(RefreshTokenServiceBindings.REFRESH_EXPIRES_IN).to(
+    this.bind(auth.RefreshTokenServiceBindings.REFRESH_EXPIRES_IN).to(
       process.env.REFRESH_EXPIRES_IN ?? '2592000',
     );
 
     // This allows the JWT system to query User collection
     this.dataSource(
       MoneyManageDbDataSource,
-      UserServiceBindings.DATASOURCE_NAME,
+      auth.UserServiceBindings.DATASOURCE_NAME,
     );
   }
 }

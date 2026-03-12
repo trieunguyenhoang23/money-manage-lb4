@@ -10,3 +10,4 @@ export * from './category/category.controller';
 export * from './reminder/reminder-transaction.controller';
 export * from './reminder/reminder.controller';
 export * from './transaction/transaction.controller';
+export * from './sync_data.controller';

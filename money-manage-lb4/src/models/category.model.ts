@@ -8,7 +8,7 @@ export class Category extends Entity {
   @property({
     type: 'string',
     id: true,
-    generated: true,
+    generated: false,
   })
   id?: string;
 
@@ -41,7 +41,7 @@ export class Category extends Entity {
 
   @property({
     type: 'date',
-    required: true,
+    required: false,
   })
   updated_at: string;
 

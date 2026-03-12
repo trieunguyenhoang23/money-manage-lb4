@@ -6,7 +6,7 @@ export class Transaction extends Entity {
   @property({
     type: 'string',
     id: true,
-    generated: true,
+    generated: false,
   })
   id?: string;
 
@@ -51,7 +51,7 @@ export class Transaction extends Entity {
 
   @property({
     type: 'date',
-    required: true,
+    required: false,
   })
   updated_at: string;
 

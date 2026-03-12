@@ -1,150 +1,133 @@
-import {
-  Count,
-  CountSchema,
-  Filter,
-  FilterExcludingWhere,
-  repository,
-  Where,
-} from '@loopback/repository';
-import {
-  post,
-  param,
-  get,
-  getModelSchemaRef,
-  patch,
-  put,
-  del,
-  requestBody,
-  response,
-} from '@loopback/rest';
+import * as repo from '@loopback/repository';
+import * as rest from '@loopback/rest';
+import {Getter} from '@loopback/core';
 import {Category} from '../../models';
 import {CategoryRepository} from '../../repositories';
+import {
+  getCustomCountResponseSchema,
+  getCustomModelResponseSchema,
+} from '../utils/custom-response-schema';
+import {getCustomRequestBody} from '../utils/custom-request-body';
+import {inject} from '@loopback/core';
+import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
+import {authenticate} from '@loopback/authentication';
 
 export class CategoryController {
   constructor(
-    @repository(CategoryRepository)
-    public categoryRepository : CategoryRepository,
+    @repo.repository(CategoryRepository)
+    public categoryRepository: CategoryRepository,
   ) {}
 
-  @post('/categories')
-  @response(200, {
-    description: 'Category model instance',
-    content: {'application/json': {schema: getModelSchemaRef(Category)}},
-  })
+  //* GET
+  @rest.get('get/categories/count')
+  @rest.response(200, getCustomCountResponseSchema('Category model count'))
+  async count(
+    @rest.param.where(Category) where?: repo.Where<Category>,
+  ): Promise<repo.Count> {
+    return this.categoryRepository.count(where);
+  }
+
+  @rest.get('get/categories/load_by_page')
+  @authenticate('jwt')
+  @rest.response(
+    200,
+    getCustomModelResponseSchema(
+      Category,
+      'Array of Category model instances',
+      true,
+      true,
+    ),
+  )
+  async find(
+    @inject.getter(SecurityBindings.USER) getUser: Getter<UserProfile>,
+    @rest.param.query.number('page') page: number,
+    @rest.param.query.number('limit_count') limit_count: number,
+  ): Promise<Category[]> {
+    const currentUserProfile = await getUser();
+
+    // Extract the ID
+    const user_id = currentUserProfile[securityId];
+
+    return this.categoryRepository.find({
+      limit: limit_count,
+      skip: page * limit_count,
+      order: ['created_at desc'],
+      where: {user_id},
+    });
+  }
+
+  @rest.get('get/categories/{id}')
+  @rest.response(
+    200,
+    getCustomModelResponseSchema(
+      Category,
+      'Category model instance',
+      false,
+      true,
+    ),
+  )
+  async findById(
+    @rest.param.path.string('id') id: string,
+    @rest.param.filter(Category, {exclude: 'where'})
+    filter?: repo.FilterExcludingWhere<Category>,
+  ): Promise<Category> {
+    return this.categoryRepository.findById(id, filter);
+  }
+
+  //Todo POST
+  @rest.post('post/categories')
+  @rest.response(
+    200,
+    getCustomModelResponseSchema(Category, 'Category model instance', false),
+  )
   async create(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Category, {
-            title: 'NewCategory',
-            exclude: ['id'],
-          }),
-        },
-      },
+    @getCustomRequestBody(Category, {
+      title: 'NewCategory',
+      exclude: ['id'],
     })
     category: Omit<Category, 'id'>,
   ): Promise<Category> {
     return this.categoryRepository.create(category);
   }
 
-  @get('/categories/count')
-  @response(200, {
-    description: 'Category model count',
-    content: {'application/json': {schema: CountSchema}},
-  })
-  async count(
-    @param.where(Category) where?: Where<Category>,
-  ): Promise<Count> {
-    return this.categoryRepository.count(where);
-  }
-
-  @get('/categories')
-  @response(200, {
-    description: 'Array of Category model instances',
-    content: {
-      'application/json': {
-        schema: {
-          type: 'array',
-          items: getModelSchemaRef(Category, {includeRelations: true}),
-        },
-      },
-    },
-  })
-  async find(
-    @param.filter(Category) filter?: Filter<Category>,
-  ): Promise<Category[]> {
-    return this.categoryRepository.find(filter);
-  }
-
-  @patch('/categories')
-  @response(200, {
-    description: 'Category PATCH success count',
-    content: {'application/json': {schema: CountSchema}},
-  })
+  //? PATCH
+  @rest.patch('patch/categories')
+  @rest.response(
+    200,
+    getCustomCountResponseSchema('Category PATCH success count'),
+  )
   async updateAll(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Category, {partial: true}),
-        },
-      },
-    })
+    @getCustomRequestBody(Category, {partial: true})
     category: Category,
-    @param.where(Category) where?: Where<Category>,
-  ): Promise<Count> {
+    @rest.param.where(Category) where?: repo.Where<Category>,
+  ): Promise<repo.Count> {
     return this.categoryRepository.updateAll(category, where);
   }
 
-  @get('/categories/{id}')
-  @response(200, {
-    description: 'Category model instance',
-    content: {
-      'application/json': {
-        schema: getModelSchemaRef(Category, {includeRelations: true}),
-      },
-    },
-  })
-  async findById(
-    @param.path.string('id') id: string,
-    @param.filter(Category, {exclude: 'where'}) filter?: FilterExcludingWhere<Category>
-  ): Promise<Category> {
-    return this.categoryRepository.findById(id, filter);
-  }
-
-  @patch('/categories/{id}')
-  @response(204, {
-    description: 'Category PATCH success',
-  })
+  @rest.patch('patch/categories/{id}')
+  @rest.response(204, getCustomCountResponseSchema('Category PATCH success'))
   async updateById(
-    @param.path.string('id') id: string,
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Category, {partial: true}),
-        },
-      },
-    })
+    @rest.param.path.string('id') id: string,
+    @getCustomRequestBody(Category, {partial: true})
     category: Category,
   ): Promise<void> {
     await this.categoryRepository.updateById(id, category);
   }
 
-  @put('/categories/{id}')
-  @response(204, {
-    description: 'Category PUT success',
-  })
+  //Todo PUT
+  @rest.put('patch/categories/{id}')
+  @rest.response(204, getCustomCountResponseSchema('Category PUT success'))
   async replaceById(
-    @param.path.string('id') id: string,
-    @requestBody() category: Category,
+    @rest.param.path.string('id') id: string,
+    @rest.requestBody() category: Category,
   ): Promise<void> {
     await this.categoryRepository.replaceById(id, category);
   }
 
-  @del('/categories/{id}')
-  @response(204, {
-    description: 'Category DELETE success',
-  })
-  async deleteById(@param.path.string('id') id: string): Promise<void> {
+  //! DELETE
+  @rest.del('delete/categories/{id}')
+  @rest.response(204, getCustomCountResponseSchema('Category DELETE success'))
+  async deleteById(@rest.param.path.string('id') id: string): Promise<void> {
     await this.categoryRepository.deleteById(id);
   }
 }
