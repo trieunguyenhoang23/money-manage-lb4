@@ -76,17 +76,23 @@ export class CategoryController {
 
   //Todo POST
   @rest.post('post/categories')
+  @authenticate('jwt')
   @rest.response(
     200,
     getCustomModelResponseSchema(Category, 'Category model instance', false),
   )
   async create(
+    @inject.getter(SecurityBindings.USER) getUser: Getter<UserProfile>,
     @getCustomRequestBody(Category, {
       title: 'NewCategory',
-      exclude: ['id'],
     })
-    category: Omit<Category, 'id'>,
+    category: Category,
   ): Promise<Category> {
+    const currentUserProfile = await getUser();
+    // Extract the ID
+    const user_id = currentUserProfile[securityId];
+
+    category.user_id = user_id;
     return this.categoryRepository.create(category);
   }
 
@@ -105,12 +111,18 @@ export class CategoryController {
   }
 
   @rest.patch('patch/categories/{id}')
+  @authenticate('jwt')
   @rest.response(204, getCustomCountResponseSchema('Category PATCH success'))
   async updateById(
+    @inject.getter(SecurityBindings.USER) getUser: Getter<UserProfile>,
     @rest.param.path.string('id') id: string,
     @getCustomRequestBody(Category, {partial: true})
     category: Category,
   ): Promise<void> {
+    const currentUserProfile = await getUser();
+    // Extract the ID
+    const user_id = currentUserProfile[securityId];
+
     await this.categoryRepository.updateById(id, category);
   }
 

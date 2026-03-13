@@ -47,7 +47,7 @@ export class Category extends Entity {
 
   @property({
     type: 'string',
-    required: true,
+    required: false,
   })
   user_id: string;
 

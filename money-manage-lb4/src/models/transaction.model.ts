@@ -38,10 +38,10 @@ export class Transaction extends Entity {
   note: string;
 
   @property({
-    type: 'date',
+    type: 'string',
     required: true,
   })
-  transaction_date: string;
+  image_description: string;
 
   @property({
     type: 'date',
