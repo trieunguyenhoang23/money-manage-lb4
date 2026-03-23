@@ -11,6 +11,7 @@ import path from 'path';
 import {MySequence} from './sequence';
 import {VerifyAuthenticateUseCase} from './domain/usecase/user_auth/verify-authenticate.usecase';
 import {
+  CREATE_TRANSACTION_USECASE,
   SYNC_USER_DATA_USECASE,
   VERIFY_AUTH_USECASE,
 } from './domain/usecase/binding_key.usecase';
@@ -19,6 +20,13 @@ import * as auth from '@loopback/authentication-jwt';
 import {MoneyManageDbDataSource} from './datasources';
 import {RefreshTokenRepository} from './repositories/refresh-token.repository';
 import {SyncUserDataUseCase} from './domain/usecase/sync/sync-user-data.usecase';
+import {CreateTransactionUseCase} from './domain/usecase/transaction/create_transaction.usecase';
+import {UploadFileMulterService} from './infrastructure/file/upload-file_multer.service';
+import {UploadFileS3Service} from './infrastructure/file/upload-file-s3.service';
+import {
+  UPLOAD_FILE_MULTER_SERVICE,
+  UPLOAD_FILE_S3_SERVICE,
+} from './infrastructure/binding_key.infrastructure';
 
 export {ApplicationConfig};
 
@@ -51,9 +59,14 @@ export class MoneyMangeApplication extends BootMixin(
       },
     };
 
-    ///USE CASE Binding
+    // USE CASE Binding
     this.bind(VERIFY_AUTH_USECASE.key).toClass(VerifyAuthenticateUseCase);
     this.bind(SYNC_USER_DATA_USECASE.key).toClass(SyncUserDataUseCase);
+    this.bind(CREATE_TRANSACTION_USECASE.key).toClass(CreateTransactionUseCase);
+
+    // INFRASTRUCTURE Binding
+    this.bind(UPLOAD_FILE_MULTER_SERVICE.key).toClass(UploadFileMulterService);
+    this.bind(UPLOAD_FILE_S3_SERVICE.key).toClass(UploadFileS3Service);
 
     /// JWT Config
     this.component(AuthenticationComponent);

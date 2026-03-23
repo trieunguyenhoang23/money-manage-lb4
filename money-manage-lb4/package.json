@@ -50,6 +50,7 @@
     "!*/__tests__"
   ],
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1014.0",
     "@loopback/authentication": "^11.0.0",
     "@loopback/authentication-jwt": "^0.15.0",
     "@loopback/boot": "^7.0.11",
@@ -60,12 +61,14 @@
     "@loopback/service-proxy": "^7.0.11",
     "dotenv": "^17.3.1",
     "loopback-connector-mongodb": "^6.3.1",
+    "multer": "^2.1.1",
     "tslib": "^2.0.0"
   },
   "devDependencies": {
     "@loopback/build": "^11.0.10",
     "@loopback/eslint-config": "^15.0.5",
     "@loopback/testlab": "^7.0.10",
+    "@types/multer": "^2.1.0",
     "@types/node": "^16.18.126",
     "eslint": "^8.57.1",
     "source-map-support": "^0.5.21",

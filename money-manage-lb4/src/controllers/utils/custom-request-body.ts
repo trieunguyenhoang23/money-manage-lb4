@@ -48,3 +48,26 @@ export function getCustomRequestBody(model?: any, options: any = {}) {
     },
   });
 }
+
+export function MultipartFormDataRequest(options?: {
+  description: string;
+  additionalProps: boolean;
+}) {
+  const description = options?.description ?? 'Multipart form-data request';
+  const allowAdditional = options?.additionalProps ?? true;
+
+  return requestBody({
+    description,
+    require: true,
+    content: {
+      'multipart/form-data': {
+        //Dòng chảy xử lí từng chunk không cần phải đợi nhận toàn bộ buffer rồi mói 7xu73 lí
+        'x-parser': 'stream',
+        schema: {
+          type: 'object',
+          additionalProperties: allowAdditional,
+        },
+      },
+    },
+  });
+}
