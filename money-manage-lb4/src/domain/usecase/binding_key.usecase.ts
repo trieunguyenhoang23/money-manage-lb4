@@ -12,3 +12,8 @@ export const CREATE_TRANSACTION_USECASE =
   BindingKey.create<VerifyAuthenticateUseCase>(
     'usecases.CreateTransactionUseCase',
   );
+
+export const UPDATE_TRANSACTION_USECASE =
+  BindingKey.create<VerifyAuthenticateUseCase>(
+    'usecases.UpdateTransactionUseCase',
+  );

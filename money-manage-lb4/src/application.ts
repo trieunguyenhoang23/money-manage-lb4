@@ -13,6 +13,7 @@ import {VerifyAuthenticateUseCase} from './domain/usecase/user_auth/verify-authe
 import {
   CREATE_TRANSACTION_USECASE,
   SYNC_USER_DATA_USECASE,
+  UPDATE_TRANSACTION_USECASE,
   VERIFY_AUTH_USECASE,
 } from './domain/usecase/binding_key.usecase';
 import {AuthenticationComponent} from '@loopback/authentication';
@@ -27,6 +28,7 @@ import {
   UPLOAD_FILE_MULTER_SERVICE,
   UPLOAD_FILE_S3_SERVICE,
 } from './infrastructure/binding_key.infrastructure';
+import {UpdateTransactionUseCase} from './domain/usecase/transaction/update_transaction.usecase';
 
 export {ApplicationConfig};
 
@@ -63,6 +65,7 @@ export class MoneyMangeApplication extends BootMixin(
     this.bind(VERIFY_AUTH_USECASE.key).toClass(VerifyAuthenticateUseCase);
     this.bind(SYNC_USER_DATA_USECASE.key).toClass(SyncUserDataUseCase);
     this.bind(CREATE_TRANSACTION_USECASE.key).toClass(CreateTransactionUseCase);
+    this.bind(UPDATE_TRANSACTION_USECASE.key).toClass(UpdateTransactionUseCase);
 
     // INFRASTRUCTURE Binding
     this.bind(UPLOAD_FILE_MULTER_SERVICE.key).toClass(UploadFileMulterService);

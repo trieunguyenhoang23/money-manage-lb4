@@ -38,7 +38,7 @@ export class UploadFileMulterService {
       filename: (req, file, cb) => {
         const ext = path.extname(file.originalname);
         const base = path.basename(file.originalname, ext);
-        cb(null, `${base}-${uuidv4()}${ext}`);
+        cb(null, `${base}${ext}`);
       },
     });
     return multer({storage});

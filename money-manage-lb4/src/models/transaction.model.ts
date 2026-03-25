@@ -39,9 +39,15 @@ export class Transaction extends Entity {
 
   @property({
     type: 'string',
-    required: true,
+    required: false,
   })
   image_description: string;
+
+  @property({
+    type: 'date',
+    required: true,
+  })
+  transaction_at: string;
 
   @property({
     type: 'date',

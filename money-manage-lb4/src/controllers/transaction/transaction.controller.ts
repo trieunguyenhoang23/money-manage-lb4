@@ -11,7 +11,10 @@ import {
   MultipartFormDataRequest,
 } from '../utils/custom-request-body';
 import {inject} from '@loopback/core';
-import {CREATE_TRANSACTION_USECASE} from '../../domain/usecase/binding_key.usecase';
+import {
+  CREATE_TRANSACTION_USECASE,
+  UPDATE_TRANSACTION_USECASE,
+} from '../../domain/usecase/binding_key.usecase';
 import {CreateTransactionUseCase} from '../../domain/usecase/transaction/create_transaction.usecase';
 import {RestBindings} from '@loopback/rest';
 
@@ -25,6 +28,9 @@ import {
   UPLOAD_FILE_S3_SERVICE,
   UPLOAD_FILE_MULTER_SERVICE,
 } from '../../infrastructure/binding_key.infrastructure';
+import {authenticate} from '@loopback/authentication';
+import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
+import {UpdateTransactionUseCase} from '../../domain/usecase/transaction/update_transaction.usecase';
 
 export class TransactionController {
   constructor(
@@ -40,6 +46,8 @@ export class TransactionController {
     private s3Service: UploadFileS3Service,
     @inject(UPLOAD_FILE_MULTER_SERVICE)
     private multerService: UploadFileMulterService,
+    @inject(UPDATE_TRANSACTION_USECASE)
+    private updateTransactionUseCase: UpdateTransactionUseCase,
   ) {}
 
   //* GET
@@ -51,7 +59,8 @@ export class TransactionController {
     return this.transactionRepository.count(where);
   }
 
-  @rest.get('get/transactions')
+  @rest.get('get/transactions/load_by_page')
+  @authenticate('jwt')
   @rest.response(
     200,
     getCustomModelResponseSchema(
@@ -62,9 +71,21 @@ export class TransactionController {
     ),
   )
   async find(
-    @rest.param.filter(Transaction) filter?: repo.Filter<Transaction>,
+    @inject.getter(SecurityBindings.USER) getUser: repo.Getter<UserProfile>,
+    @rest.param.query.number('page') page: number,
+    @rest.param.query.number('limit_count') limit_count: number,
   ): Promise<Transaction[]> {
-    return this.transactionRepository.find(filter);
+    const currentUserProfile = await getUser();
+
+    // Extract the ID
+    const user_id = currentUserProfile[securityId];
+
+    return this.transactionRepository.find({
+      limit: limit_count,
+      skip: page * limit_count,
+      order: ['created_at desc'],
+      where: {user_id},
+    });
   }
 
   @rest.get('get/transactions/{id}')
@@ -87,66 +108,84 @@ export class TransactionController {
 
   //Todo: POST
   @rest.post('post/transactions')
+  @authenticate('jwt')
   @rest.response(
     200,
     getCustomModelResponseSchema(Transaction, 'Transaction model instance'),
   )
   async create(
     @MultipartFormDataRequest({
-      description: 'Upload Wallpaper',
-      additionalProps: false,
+      description: 'Upload Transaction',
+      additionalProps: true,
     })
     uploadTransactionMultipart: any,
+    @inject.getter(SecurityBindings.USER) getUser: repo.Getter<UserProfile>,
   ): Promise<any> {
-    const uploadFileMulter = await this.multerService.upload(
+    const currentUserProfile = await getUser();
+    const user_id = currentUserProfile[securityId];
+
+    const multerFiles = await this.multerService.upload(
       'image_description',
       this.req,
       this.res,
     );
-    
-    let imageDescriptionUrl: string | undefined;
-    if (uploadFileMulter && uploadFileMulter.length > 0) {
-      const uploadedFileS3 = await this.s3Service.uploadFileToS3(
-        uploadFileMulter,
-        //Folder lưu trữ trên S3
-        'money-manage/image_description',
-      );
-
-      imageDescriptionUrl = uploadedFileS3.path;
-    }
 
     const body = (this.req as any).body ?? {};
+    const newFile =
+      multerFiles && multerFiles.length > 0 ? multerFiles[0] : undefined;
 
-    return await this.createTransactionUseCase.execute(
+    const newTransaction = await this.createTransactionUseCase.execute(
       body,
-      imageDescriptionUrl,
+      user_id,
+      newFile,
     );
+
+    return {image_description: newTransaction.image_description};
   }
 
   //? PATCH
-  @rest.patch('patch/transactions')
-  @rest.response(200, {
-    description: 'Transaction PATCH success count',
-    content: {'application/json': {schema: repo.CountSchema}},
-  })
-  async updateAll(
-    @getCustomRequestBody(Transaction, {partial: true})
-    transaction: Transaction,
-    @rest.param.where(Transaction) where?: repo.Where<Transaction>,
-  ): Promise<repo.Count> {
-    return this.transactionRepository.updateAll(transaction, where);
-  }
+  // @rest.patch('patch/transactions')
+  // @rest.response(200, {
+  //   description: 'Transaction PATCH success count',
+  //   content: {'application/json': {schema: repo.CountSchema}},
+  // })
+  // async updateAll(
+  //   @getCustomRequestBody(Transaction, {partial: true})
+  //   transaction: Transaction,
+  //   @rest.param.where(Transaction) where?: repo.Where<Transaction>,
+  // ): Promise<repo.Count> {
+  //   return this.transactionRepository.updateAll(transaction, where);
+  // }
 
   @rest.patch('patch/transactions/{id}')
+  @authenticate('jwt')
   @rest.response(204, {
     description: 'Transaction PATCH success',
   })
   async updateById(
     @rest.param.path.string('id') id: string,
-    @getCustomRequestBody(Transaction, {partial: true})
-    transaction: Transaction,
-  ): Promise<void> {
-    await this.transactionRepository.updateById(id, transaction);
+    @MultipartFormDataRequest({
+      description: 'Update Transaction',
+      additionalProps: true,
+    })
+    uploadTransactionMultipart: any,
+    @inject.getter(SecurityBindings.USER) getUser: repo.Getter<UserProfile>,
+  ): Promise<any> {
+    const user = await getUser();
+
+    const files = await this.multerService.upload(
+      'image_description',
+      this.req,
+      this.res,
+    );
+    const newFile = files && files.length > 0 ? files[0] : undefined;
+
+    return await this.updateTransactionUseCase.execute(
+      id,
+      user[securityId],
+      this.req.body,
+      newFile,
+    );
   }
 
   //Todo PUT
@@ -163,10 +202,32 @@ export class TransactionController {
 
   //! DELETE
   @rest.del('delete/transactions/{id}')
+  @authenticate('jwt')
   @rest.response(204, {
     description: 'Transaction DELETE success',
   })
-  async deleteById(@rest.param.path.string('id') id: string): Promise<void> {
+  async deleteById(
+    @rest.param.path.string('id') id: string,
+    @inject.getter(SecurityBindings.USER) getUser: repo.Getter<UserProfile>,
+  ): Promise<any> {
+    const currentUserProfile = await getUser();
+    const user_id = currentUserProfile[securityId];
+
+    const transaction = await this.transactionRepository.findOne({
+      where: {id, user_id},
+    });
+
+    if (!transaction) {
+      throw new rest.HttpErrors.NotFound(
+        `Transaction with id ${id} not found or you don't have permission to delete it.`,
+      );
+    }
+
+    if (transaction.image_description) {
+      await this.s3Service.deleteFileFromS3(transaction.image_description);
+    }
+
     await this.transactionRepository.deleteById(id);
+    return {message: 'Success'};
   }
 }

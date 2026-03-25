@@ -1,11 +1,11 @@
-import {ApplicationConfig, MoneyMangeApplication} from './application';
 import * as dotenv from 'dotenv';
-export * from './application';
 import * as path from 'path';
-
 const envPath = path.resolve(__dirname, '../.env');
 console.log('📂 Loading .env from:', envPath);
 dotenv.config({path: envPath});
+
+import {ApplicationConfig, MoneyMangeApplication} from './application';
+export * from './application';
 
 export async function main(options: ApplicationConfig = {}) {
   const app = new MoneyMangeApplication(options);
