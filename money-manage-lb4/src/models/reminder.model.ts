@@ -21,12 +21,6 @@ export class Reminder extends Entity {
     type: 'string',
     required: true,
   })
-  currency: string;
-
-  @property({
-    type: 'string',
-    required: true,
-  })
   type: string;
 
   @property({

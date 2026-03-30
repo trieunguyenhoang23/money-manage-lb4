@@ -85,6 +85,11 @@ export class TransactionController {
       skip: page * limit_count,
       order: ['created_at desc'],
       where: {user_id},
+      include: [
+        {
+          relation: 'category',
+        },
+      ],
     });
   }
 

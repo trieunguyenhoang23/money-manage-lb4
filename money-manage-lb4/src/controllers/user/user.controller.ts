@@ -7,6 +7,9 @@ import {
   getCustomCountResponseSchema,
 } from '../utils/custom-response-schema';
 import {getCustomRequestBody} from '../utils/custom-request-body';
+import {authenticate} from '@loopback/authentication';
+import {inject} from '@loopback/core';
+import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 
 export class UserController {
   constructor(
@@ -62,40 +65,20 @@ export class UserController {
 
   //? PATCH
   @rest.patch('patch/users')
+  @authenticate('jwt')
   @rest.response(200, {
     description: 'User PATCH success count',
     content: {'application/json': {schema: repo.CountSchema}},
   })
   async updateAll(
-    @rest.requestBody({
-      content: {
-        'application/json': {
-          schema: rest.getModelSchemaRef(User, {partial: true}),
-        },
-      },
-    })
-    user: User,
-    @rest.param.where(User) where?: repo.Where<User>,
-  ): Promise<repo.Count> {
-    return this.userRepository.updateAll(user, where);
-  }
-
-  @rest.patch('patch/users/{id}')
-  @rest.response(204, {
-    description: 'User PATCH success',
-  })
-  async updateById(
-    @rest.param.path.string('id') id: string,
-    @rest.requestBody({
-      content: {
-        'application/json': {
-          schema: rest.getModelSchemaRef(User, {partial: true}),
-        },
-      },
-    })
-    user: User,
-  ): Promise<void> {
-    await this.userRepository.updateById(id, user);
+    @getCustomRequestBody(User, {partial: true}) user: User,
+    @inject.getter(SecurityBindings.USER) getUser: repo.Getter<UserProfile>,
+  ): Promise<any> {
+    const currentUserProfile = await getUser();
+    // Extract the ID
+    const user_id = currentUserProfile[securityId];
+    await this.userRepository.updateById(user_id, user);
+    return {message: 'Update successful'};
   }
 
   //Todo PUT

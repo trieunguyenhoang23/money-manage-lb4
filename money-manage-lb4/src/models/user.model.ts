@@ -38,6 +38,12 @@ export class User extends Entity {
   })
   created_at: string;
 
+  @property({
+    type: 'string',
+    required: true,
+  })
+  currency: string;
+
   @hasMany(() => Category, {keyTo: 'user_id'})
   categories: Category[];
 

@@ -1,5 +1,6 @@
-import {Entity, model, property} from '@loopback/repository';
+import {belongsTo, Entity, model, property} from '@loopback/repository';
 import {TransactionType} from '../domain/enums/transaction-type.enum';
+import { Category } from './category.model';
 
 @model({settings: {strict: false}})
 export class Transaction extends Entity {
@@ -24,12 +25,6 @@ export class Transaction extends Entity {
     required: true,
   })
   amount: number;
-
-  @property({
-    type: 'string',
-    required: true,
-  })
-  currency: string;
 
   @property({
     type: 'string',
@@ -67,10 +62,7 @@ export class Transaction extends Entity {
   })
   user_id: string;
 
-  @property({
-    type: 'string',
-    required: true,
-  })
+  @belongsTo(() => Category, {name: 'category'})
   category_id: string;
 
   @property({

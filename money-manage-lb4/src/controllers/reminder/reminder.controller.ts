@@ -1,149 +1,125 @@
-import {
-  Count,
-  CountSchema,
-  Filter,
-  FilterExcludingWhere,
-  repository,
-  Where,
-} from '@loopback/repository';
-import {
-  post,
-  param,
-  get,
-  getModelSchemaRef,
-  patch,
-  put,
-  del,
-  requestBody,
-  response,
-} from '@loopback/rest';
+import * as repo from '@loopback/repository';
+import * as rest from '@loopback/rest';
 import {Reminder} from '../../models';
 import {ReminderRepository} from '../../repositories';
+import {authenticate} from '@loopback/authentication';
+import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
+import {UpdateTransactionUseCase} from '../../domain/usecase/transaction/update_transaction.usecase';
+import {getCustomRequestBody} from '../utils/custom-request-body';
+import {
+  getCustomCountResponseSchema,
+  getCustomModelResponseSchema,
+} from '../utils/custom-response-schema';
 
 export class ReminderController {
   constructor(
-    @repository(ReminderRepository)
+    @repo.repository(ReminderRepository)
     public reminderRepository: ReminderRepository,
   ) {}
 
-  @post('/reminders')
-  @response(200, {
-    description: 'Reminder model instance',
-    content: {'application/json': {schema: getModelSchemaRef(Reminder)}},
-  })
+  //* GET
+  @rest.get('get/reminders/count')
+  @rest.response(200, getCustomCountResponseSchema('Reminder model count'))
+  async count(
+    @rest.param.where(Reminder) where?: repo.Where<Reminder>,
+  ): Promise<repo.Count> {
+    return this.reminderRepository.count(where);
+  }
+
+  @rest.get('get/reminders')
+  @rest.response(
+    200,
+    getCustomModelResponseSchema(
+      Reminder,
+      'Array of Reminder model instances',
+      true,
+      true,
+    ),
+  )
+  async find(
+    @rest.param.filter(Reminder) filter?: repo.Filter<Reminder>,
+  ): Promise<Reminder[]> {
+    return this.reminderRepository.find(filter);
+  }
+
+  @rest.get('get/reminders/{id}')
+  @rest.response(
+    200,
+    getCustomModelResponseSchema(
+      Reminder,
+      'Reminder model instance',
+      false,
+      true,
+    ),
+  )
+  async findById(
+    @rest.param.path.string('id') id: string,
+    @rest.param.filter(Reminder, {exclude: 'where'})
+    filter?: repo.FilterExcludingWhere<Reminder>,
+  ): Promise<Reminder> {
+    return this.reminderRepository.findById(id, filter);
+  }
+
+  //Todo: POST
+  @rest.post('post/reminders')
+  @rest.response(
+    200,
+    getCustomModelResponseSchema(Reminder, 'Reminder model instance'),
+  )
   async create(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Reminder, {
-            title: 'NewReminder',
-            exclude: ['id'],
-          }),
-        },
-      },
+    @getCustomRequestBody(Reminder, {
+      title: 'NewReminder',
+      exclude: ['id'],
     })
     reminder: Omit<Reminder, 'id'>,
   ): Promise<Reminder> {
     return this.reminderRepository.create(reminder);
   }
 
-  @get('/reminders/count')
-  @response(200, {
-    description: 'Reminder model count',
-    content: {'application/json': {schema: CountSchema}},
-  })
-  async count(@param.where(Reminder) where?: Where<Reminder>): Promise<Count> {
-    return this.reminderRepository.count(where);
-  }
-
-  @get('/reminders')
-  @response(200, {
-    description: 'Array of Reminder model instances',
-    content: {
-      'application/json': {
-        schema: {
-          type: 'array',
-          items: getModelSchemaRef(Reminder, {includeRelations: true}),
-        },
-      },
-    },
-  })
-  async find(
-    @param.filter(Reminder) filter?: Filter<Reminder>,
-  ): Promise<Reminder[]> {
-    return this.reminderRepository.find(filter);
-  }
-
-  @patch('/reminders')
-  @response(200, {
-    description: 'Reminder PATCH success count',
-    content: {'application/json': {schema: CountSchema}},
-  })
-  async updateAll(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Reminder, {partial: true}),
-        },
-      },
-    })
-    reminder: Reminder,
-    @param.where(Reminder) where?: Where<Reminder>,
-  ): Promise<Count> {
-    return this.reminderRepository.updateAll(reminder, where);
-  }
-
-  @get('/reminders/{id}')
-  @response(200, {
-    description: 'Reminder model instance',
-    content: {
-      'application/json': {
-        schema: getModelSchemaRef(Reminder, {includeRelations: true}),
-      },
-    },
-  })
-  async findById(
-    @param.path.string('id') id: string,
-    @param.filter(Reminder, {exclude: 'where'})
-    filter?: FilterExcludingWhere<Reminder>,
-  ): Promise<Reminder> {
-    return this.reminderRepository.findById(id, filter);
-  }
-
-  @patch('/reminders/{id}')
-  @response(204, {
+  //? PATCH
+  @rest.patch('patch/reminders/{id}')
+  @rest.response(204, {
     description: 'Reminder PATCH success',
   })
   async updateById(
-    @param.path.string('id') id: string,
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Reminder, {partial: true}),
-        },
-      },
-    })
+    @rest.param.path.string('id') id: string,
+    @getCustomRequestBody(Reminder, {partial: true})
     reminder: Reminder,
   ): Promise<void> {
     await this.reminderRepository.updateById(id, reminder);
   }
 
-  @put('/reminders/{id}')
-  @response(204, {
+  @rest.patch('patch/reminders')
+  @rest.response(
+    200,
+    getCustomCountResponseSchema('Reminder PATCH success count'),
+  )
+  async updateAll(
+    @getCustomRequestBody(Reminder, {partial: true})
+    reminder: Reminder,
+    @rest.param.where(Reminder) where?: repo.Where<Reminder>,
+  ): Promise<repo.Count> {
+    return this.reminderRepository.updateAll(reminder, where);
+  }
+
+  //Todo: PUT
+  @rest.put('put/reminders/{id}')
+  @rest.response(204, {
     description: 'Reminder PUT success',
   })
   async replaceById(
-    @param.path.string('id') id: string,
-    @requestBody() reminder: Reminder,
+    @rest.param.path.string('id') id: string,
+    @rest.requestBody() reminder: Reminder,
   ): Promise<void> {
     await this.reminderRepository.replaceById(id, reminder);
   }
 
-  @del('/reminders/{id}')
-  @response(204, {
+  //! DELETE
+  @rest.del('delete/reminders/{id}')
+  @rest.response(204, {
     description: 'Reminder DELETE success',
   })
-  async deleteById(@param.path.string('id') id: string): Promise<void> {
+  async deleteById(@rest.param.path.string('id') id: string): Promise<void> {
     await this.reminderRepository.deleteById(id);
   }
 }

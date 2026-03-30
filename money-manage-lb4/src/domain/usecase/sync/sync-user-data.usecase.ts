@@ -1,56 +1,19 @@
-import {repository} from '@loopback/repository';
-import {
-  CategoryRepository,
-  ReminderRepository,
-  TransactionRepository,
-} from '../../../repositories';
-import {Category, Reminder, Transaction} from '../../../models';
 import {bind, BindingScope} from '@loopback/core';
-import {SYNC_USER_DATA_USECASE} from '../binding_key.usecase';
+import {SYNC_CATEGORY_DATA_USECASE} from '../binding_key.usecase';
+import {repository} from '@loopback/repository';
+import {CategoryRepository} from '../../../repositories';
 
 @bind({
   scope: BindingScope.SINGLETON,
-  tags: {key: SYNC_USER_DATA_USECASE.key},
+  tags: {key: SYNC_CATEGORY_DATA_USECASE.key},
 })
-export class SyncUserDataUseCase {
+export class SyncCategoryDataUseCase {
   constructor(
     @repository(CategoryRepository)
     public categoryRepository: CategoryRepository,
-    @repository(TransactionRepository)
-    public transactionRepository: TransactionRepository,
-    @repository(ReminderRepository)
-    public reminderRepository: ReminderRepository,
   ) {}
 
-  async execute(
-    body: {
-      categories: Category[];
-      transactions: Transaction[];
-      reminders: Reminder[];
-    },
-    userId: string,
-  ) {
-    const {categories, transactions, reminders} = body;
-
-    try {
-      await Promise.all([
-        this.syncEntities(this.categoryRepository, categories, userId),
-        this.syncEntities(this.reminderRepository, reminders, userId),
-        this.syncEntities(this.transactionRepository, transactions, userId),
-      ]);
-
-      return {status: 'success'};
-    } catch (err) {
-      console.error('Sync Error:', err);
-      throw err;
-    }
-  }
-
-  private async syncEntities(
-    repo: any,
-    entities: any[],
-    userId: string,
-  ): Promise<void> {
+  async execute(entities: any[], userId: string) {
     if (!entities || entities.length === 0) return;
 
     const operations = entities.map(async item => {
@@ -59,12 +22,12 @@ export class SyncUserDataUseCase {
       // Ensure using the ID provided by the mobile app
       const id = item.id;
 
-      const exists = await repo.exists(id);
+      const exists = await this.categoryRepository.exists(id);
       if (exists) {
         // Use updateById to preserve other fields MongoDB might have added
-        return repo.updateById(id, item);
+        return this.categoryRepository.updateById(id, item);
       } else {
-        return repo.create(item);
+        return this.categoryRepository.create(item);
       }
     });
 

@@ -11,6 +11,7 @@ import {getCustomRequestBody} from '../utils/custom-request-body';
 import {inject} from '@loopback/core';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 import {authenticate} from '@loopback/authentication';
+import {TransactionType} from '../../domain/enums/transaction-type.enum';
 
 export class CategoryController {
   constructor(
@@ -42,17 +43,24 @@ export class CategoryController {
     @inject.getter(SecurityBindings.USER) getUser: Getter<UserProfile>,
     @rest.param.query.number('page') page: number,
     @rest.param.query.number('limit_count') limit_count: number,
+    @rest.param.query.string('type') type?: TransactionType,
   ): Promise<Category[]> {
     const currentUserProfile = await getUser();
 
     // Extract the ID
     const user_id = currentUserProfile[securityId];
 
+    const filter: any = {user_id};
+
+    if (type !== undefined) {
+      filter.type = type;
+    }
+
     return this.categoryRepository.find({
       limit: limit_count,
       skip: page * limit_count,
       order: ['created_at desc'],
-      where: {user_id},
+      where: filter,
     });
   }
 
