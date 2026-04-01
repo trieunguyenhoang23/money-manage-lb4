@@ -12,6 +12,8 @@ import {MySequence} from './sequence';
 import {VerifyAuthenticateUseCase} from './domain/usecase/user_auth/verify-authenticate.usecase';
 import {
   CREATE_TRANSACTION_USECASE,
+  GET_FINANCIAL_DATA_USECASE,
+  SPENDING_CATEGORIES_USECASE,
   SYNC_CATEGORY_DATA_USECASE,
   SYNC_TRANSACTION_DATA_USECASE,
   UPDATE_TRANSACTION_USECASE,
@@ -21,7 +23,7 @@ import {AuthenticationComponent} from '@loopback/authentication';
 import * as auth from '@loopback/authentication-jwt';
 import {MoneyManageDbDataSource} from './datasources';
 import {RefreshTokenRepository} from './repositories/refresh-token.repository';
-import {SyncCategoryDataUseCase} from './domain/usecase/sync/sync-user-data.usecase';
+import {SyncCategoryDataUseCase} from './domain/usecase/sync/sync-category-data.usecase';
 import {CreateTransactionUseCase} from './domain/usecase/transaction/create_transaction.usecase';
 import {UploadFileMulterService} from './infrastructure/file/upload-file_multer.service';
 import {UploadFileS3Service} from './infrastructure/file/upload-file-s3.service';
@@ -30,7 +32,9 @@ import {
   UPLOAD_FILE_S3_SERVICE,
 } from './infrastructure/binding_key.infrastructure';
 import {UpdateTransactionUseCase} from './domain/usecase/transaction/update_transaction.usecase';
-import { SyncTransactionDataUseCase } from './domain/usecase/sync/sync-transaction-data.usecase';
+import {SyncTransactionDataUseCase} from './domain/usecase/sync/sync-transaction-data.usecase';
+import {GetFinancialDataUseCase} from './domain/usecase/analytics/get_financial_data.usecase';
+import { SpendingCategoriesUseCase } from './domain/usecase/analytics/spending_categories.usecase';
 
 export {ApplicationConfig};
 
@@ -66,9 +70,13 @@ export class MoneyMangeApplication extends BootMixin(
     // USE CASE Binding
     this.bind(VERIFY_AUTH_USECASE.key).toClass(VerifyAuthenticateUseCase);
     this.bind(SYNC_CATEGORY_DATA_USECASE.key).toClass(SyncCategoryDataUseCase);
-    this.bind(SYNC_TRANSACTION_DATA_USECASE.key).toClass(SyncTransactionDataUseCase);
+    this.bind(SYNC_TRANSACTION_DATA_USECASE.key).toClass(
+      SyncTransactionDataUseCase,
+    );
     this.bind(CREATE_TRANSACTION_USECASE.key).toClass(CreateTransactionUseCase);
     this.bind(UPDATE_TRANSACTION_USECASE.key).toClass(UpdateTransactionUseCase);
+    this.bind(GET_FINANCIAL_DATA_USECASE.key).toClass(GetFinancialDataUseCase);
+    this.bind(SPENDING_CATEGORIES_USECASE.key).toClass(SpendingCategoriesUseCase);
 
     // INFRASTRUCTURE Binding
     this.bind(UPLOAD_FILE_MULTER_SERVICE.key).toClass(UploadFileMulterService);

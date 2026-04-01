@@ -7,7 +7,7 @@ import {
   MultipartFormDataRequest,
 } from './utils/custom-request-body';
 import * as usecase from '../domain/usecase/binding_key.usecase';
-import {SyncCategoryDataUseCase} from '../domain/usecase/sync/sync-user-data.usecase';
+import {SyncCategoryDataUseCase} from '../domain/usecase/sync/sync-category-data.usecase';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 import {authenticate} from '@loopback/authentication';
 import type {
