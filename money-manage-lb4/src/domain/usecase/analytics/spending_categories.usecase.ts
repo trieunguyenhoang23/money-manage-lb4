@@ -16,25 +16,45 @@ export class SpendingCategoriesUseCase {
     public userRepository: UserRepository,
   ) {}
 
-  async execute(user_id: string, type: TransactionType): Promise<any> {
-    const user = await this.userRepository.findOne({
-      where: {id: user_id},
-      include: [{relation: 'transactions'}, {relation: 'categories'}],
+  async execute(
+    user_id: string,
+    type: TransactionType,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<any> {
+    const dateFilter =
+      startDate && endDate
+        ? {
+            transaction_at: {between: [startDate, endDate]},
+          }
+        : {};
+
+    const user = await this.userRepository.findById(user_id, {
+      include: [
+        {
+          relation: 'categories',
+          scope: {where: {type: type}},
+        },
+        {
+          relation: 'transactions',
+          scope: {
+            where: {
+              type: type,
+              ...dateFilter,
+            },
+          },
+        },
+      ],
     });
 
     if (!user && user !== undefined)
       HttpErrors.NotFound("This user doesn't exist");
 
-    const filteredCategories = (user?.categories || []).filter(
-      (cat: Category) => cat.type === type,
-    );
+    const categories = user?.categories || [];
+    const transactions = user?.transactions || [];
 
-    const filteredTransactions = (user?.transactions || []).filter(
-      (tx: Transaction) => tx.type === type,
-    );
-
-    const categoriesAnalytics = filteredCategories.map((category: Category) => {
-      const relatedTransactions = filteredTransactions.filter(
+    const categoriesAnalytics = categories.map((category: Category) => {
+      const relatedTransactions = transactions.filter(
         (tx: Transaction) => tx.category_id == category.id,
       );
 

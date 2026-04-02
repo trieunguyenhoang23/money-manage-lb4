@@ -43,3 +43,8 @@ export const SPENDING_CATEGORIES_USECASE =
   BindingKey.create<GetFinancialDataUseCase>(
     'usecases.SpendingCategoriesUseCase',
   );
+
+export const GET_OVERVIEW_USECASE =
+  BindingKey.create<GetFinancialDataUseCase>(
+    'usecases.SpendingCategoriesUseCase',
+  );

@@ -13,6 +13,7 @@ import {VerifyAuthenticateUseCase} from './domain/usecase/user_auth/verify-authe
 import {
   CREATE_TRANSACTION_USECASE,
   GET_FINANCIAL_DATA_USECASE,
+  GET_OVERVIEW_USECASE,
   SPENDING_CATEGORIES_USECASE,
   SYNC_CATEGORY_DATA_USECASE,
   SYNC_TRANSACTION_DATA_USECASE,
@@ -34,7 +35,8 @@ import {
 import {UpdateTransactionUseCase} from './domain/usecase/transaction/update_transaction.usecase';
 import {SyncTransactionDataUseCase} from './domain/usecase/sync/sync-transaction-data.usecase';
 import {GetFinancialDataUseCase} from './domain/usecase/analytics/get_financial_data.usecase';
-import { SpendingCategoriesUseCase } from './domain/usecase/analytics/spending_categories.usecase';
+import {SpendingCategoriesUseCase} from './domain/usecase/analytics/spending_categories.usecase';
+import {GetOverviewUseCase} from './domain/usecase/analytics/get_overview.usecase';
 
 export {ApplicationConfig};
 
@@ -76,7 +78,10 @@ export class MoneyMangeApplication extends BootMixin(
     this.bind(CREATE_TRANSACTION_USECASE.key).toClass(CreateTransactionUseCase);
     this.bind(UPDATE_TRANSACTION_USECASE.key).toClass(UpdateTransactionUseCase);
     this.bind(GET_FINANCIAL_DATA_USECASE.key).toClass(GetFinancialDataUseCase);
-    this.bind(SPENDING_CATEGORIES_USECASE.key).toClass(SpendingCategoriesUseCase);
+    this.bind(SPENDING_CATEGORIES_USECASE.key).toClass(
+      SpendingCategoriesUseCase,
+    );
+    this.bind(GET_OVERVIEW_USECASE.key).toClass(GetOverviewUseCase);
 
     // INFRASTRUCTURE Binding
     this.bind(UPLOAD_FILE_MULTER_SERVICE.key).toClass(UploadFileMulterService);
