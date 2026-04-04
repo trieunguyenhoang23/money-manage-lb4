@@ -59,7 +59,7 @@ export class TransactionController {
     return this.transactionRepository.count(where);
   }
 
-  @rest.get('get/transactions/load_by_page')
+  @rest.get('get/transactions/load_by_month')
   @authenticate('jwt')
   @rest.response(
     200,
@@ -74,17 +74,34 @@ export class TransactionController {
     @inject.getter(SecurityBindings.USER) getUser: repo.Getter<UserProfile>,
     @rest.param.query.number('page') page: number,
     @rest.param.query.number('limit_count') limit_count: number,
+    @rest.param.query.number('month') month: number,
+    @rest.param.query.number('year') year: number,
+    @rest.param.query.string('type') type?: string,
   ): Promise<Transaction[]> {
     const currentUserProfile = await getUser();
 
     // Extract the ID
     const user_id = currentUserProfile[securityId];
 
+    const startDate = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
+    const endDate = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
+
+    const whereFilter: any = {
+      user_id,
+      transaction_at: {
+        between: [startDate, endDate],
+      },
+    };
+
+    if (type) {
+      whereFilter.type = type;
+    }
+
     return this.transactionRepository.find({
       limit: limit_count,
       skip: page * limit_count,
-      order: ['created_at desc'],
-      where: {user_id},
+      order: ['transaction_at desc'],
+      where: whereFilter,
       include: [
         {
           relation: 'category',

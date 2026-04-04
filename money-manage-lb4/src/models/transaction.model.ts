@@ -28,7 +28,7 @@ export class Transaction extends Entity {
 
   @property({
     type: 'string',
-    required: true,
+    required: false,
   })
   note: string;
 

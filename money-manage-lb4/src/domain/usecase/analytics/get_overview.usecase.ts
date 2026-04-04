@@ -86,23 +86,42 @@ export class GetOverviewUseCase {
       ])
       .toArray();
 
-    // Initialize running totals from the "Past"
+    // Initialize running totals from the Past
     let runningIncome = result.initialTotals?.[0]?.totalIncome ?? 0;
     let runningExpense = result.initialTotals?.[0]?.totalExpense ?? 0;
     let runningBalance = result.initialTotals?.[0]?.totalBalance ?? 0;
 
     // Transform data using Cumulative Logic
-    const data = result.chartData.map((item: any) => {
+    const data: any[] = [];
+
+    result.chartData.forEach((item: any, index: number) => {
       runningIncome += item.income;
       runningExpense += item.expense;
       runningBalance += item.income - item.expense;
 
-      return {
+      let trend: 'up' | 'down' | 'flatten' | 'none';
+
+      if (index === 0) {
+        trend = 'none';
+      } else {
+        const previousBalance = data[index - 1].balance;
+
+        if (runningBalance > previousBalance) {
+          trend = 'up';
+        } else if (runningBalance < previousBalance) {
+          trend = 'down';
+        } else {
+          trend = 'flatten';
+        }
+      }
+
+      data.push({
         label: item._id,
         income: runningIncome,
         expense: runningExpense,
         balance: runningBalance,
-      };
+        trend,
+      });
     });
 
     return {
