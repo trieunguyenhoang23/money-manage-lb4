@@ -1,6 +1,6 @@
 import {inject} from '@loopback/core';
 import {Getter} from '@loopback/core';
-import {post, getModelSchemaRef} from '@loopback/rest';
+import {post, get, getModelSchemaRef, param, response} from '@loopback/rest';
 import {Category, Reminder, Transaction} from '../models';
 import {
   getCustomRequestBody,
@@ -19,6 +19,9 @@ import {UploadFileMulterService} from '../infrastructure/file/upload-file_multer
 import * as infra from '../infrastructure/binding_key.infrastructure';
 import {RestBindings} from '@loopback/rest';
 import {SyncTransactionDataUseCase} from '../domain/usecase/sync/sync-transaction-data.usecase';
+import {getCustomModelResponseSchema} from './utils/custom-response-schema';
+import {repository} from '@loopback/repository';
+import {CategoryRepository, TransactionRepository} from '../repositories';
 
 export class SyncDataController {
   constructor(
@@ -34,8 +37,124 @@ export class SyncDataController {
     private s3Service: UploadFileS3Service,
     @inject(infra.UPLOAD_FILE_MULTER_SERVICE)
     private multerService: UploadFileMulterService,
+    @repository(TransactionRepository)
+    public transactionRepository: TransactionRepository,
+    @repository(CategoryRepository)
+    public categoryRepository: CategoryRepository,
   ) {}
 
+  //* GET
+  @get('get/transactions/sync_delta')
+  @authenticate('jwt')
+  @response(200, {
+    description: 'Sync Delta Response',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            data: {type: 'array', items: {'x-ts-type': Transaction}},
+            hasMore: {type: 'boolean'},
+            serverTime: {type: 'string'},
+          },
+        },
+      },
+    },
+  })
+  async syncTransactionDelta(
+    @inject.getter(SecurityBindings.USER) getUser: Getter<UserProfile>,
+    @param.query.number('page') page: number = 0,
+    @param.query.number('limit_count') limit_count: number = 20,
+    @param.query.string('last_time_sync') last_time_sync?: string,
+  ): Promise<{data: Transaction[]; hasMore: boolean; serverTime: string}> {
+    const currentUserProfile = await getUser();
+    const user_id = currentUserProfile[securityId];
+
+    const whereFilter: any = {
+      user_id: user_id,
+    };
+
+    if (last_time_sync) {
+      whereFilter.updated_at = {gte: new Date(last_time_sync)};
+    }
+
+    const data = await this.transactionRepository.find({
+      where: whereFilter,
+      limit: limit_count,
+      skip: page * limit_count,
+      order: ['updated_at asc'],
+      include: [{relation: 'category'}],
+    });
+
+    const hasMore = data.length === limit_count;
+
+    // 3. Lấy thời gian Server hiện tại
+    const serverTime = new Date().toISOString();
+
+    return {
+      data: data,
+      hasMore: hasMore,
+      serverTime: serverTime,
+    };
+  }
+
+  @get('get/categories/sync_delta')
+  @authenticate('jwt')
+  @response(200, {
+    description: 'Sync Category Delta Response',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            data: {type: 'array', items: {'x-ts-type': Category}},
+            hasMore: {type: 'boolean'},
+            serverTime: {type: 'string'},
+          },
+        },
+      },
+    },
+  })
+  async syncCateDelta(
+    @inject.getter(SecurityBindings.USER) getUser: Getter<UserProfile>,
+    @param.query.number('page') page: number = 0,
+    @param.query.number('limit_count') limit_count: number = 20,
+    @param.query.string('last_time_sync') last_time_sync?: string,
+  ): Promise<{data: Category[]; hasMore: boolean; serverTime: string}> {
+    const currentUserProfile = await getUser();
+    const user_id = currentUserProfile[securityId];
+
+    // Filter theo user_id (hoặc lấy category hệ thống nếu ông có chia loại)
+    const whereFilter: any = {
+      user_id: user_id,
+    };
+
+    // Nếu có mốc thời gian, lọc những bản ghi mới cập nhật
+    if (last_time_sync && last_time_sync !== '') {
+      whereFilter.updated_at = {gte: new Date(last_time_sync)};
+    }
+
+    const data = await this.categoryRepository.find({
+      where: whereFilter,
+      limit: limit_count,
+      skip: page * limit_count,
+      order: ['updated_at asc'], // Luôn dùng ASC để đảm bảo thứ tự sync
+    });
+
+    // Kiểm tra xem còn trang tiếp theo không
+    const hasMore = data.length === limit_count;
+
+    // Lấy thời gian hiện tại của Server để Flutter lưu lại
+    const serverTime = new Date().toISOString();
+
+    return {
+      data: data,
+      hasMore: hasMore,
+      serverTime: serverTime,
+    };
+  }
+
+  //Todo POST
   @post('post/sync/batch-category')
   @authenticate('jwt')
   async syncAll(

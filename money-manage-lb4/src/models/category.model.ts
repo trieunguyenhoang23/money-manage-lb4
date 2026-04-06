@@ -46,6 +46,11 @@ export class Category extends Entity {
   updated_at: string;
 
   @property({
+    type: 'boolean',
+  })
+  is_deleted?: boolean;
+
+  @property({
     type: 'string',
     required: false,
   })

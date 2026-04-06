@@ -110,6 +110,39 @@ export class TransactionController {
     });
   }
 
+  // @rest.get('get/transactions/load_by_page')
+  // @authenticate('jwt')
+  // @rest.response(
+  //   200,
+  //   getCustomModelResponseSchema(
+  //     Transaction,
+  //     'Array of Transaction model instances',
+  //     true,
+  //     true,
+  //   ),
+  // )
+  // async findByPage(
+  //   @inject.getter(SecurityBindings.USER) getUser: repo.Getter<UserProfile>,
+  //   @rest.param.query.number('page') page: number,
+  //   @rest.param.query.number('limit_count') limit_count: number,
+  // ): Promise<Transaction[]> {
+  //   const currentUserProfile = await getUser();
+
+  //   // Extract the ID
+  //   const user_id = currentUserProfile[securityId];
+
+  //   return this.transactionRepository.find({
+  //     limit: limit_count,
+  //     skip: page * limit_count,
+  //     order: ['transaction_at desc'],
+  //     include: [
+  //       {
+  //         relation: 'category',
+  //       },
+  //     ],
+  //   });
+  // }
+
   @rest.get('get/transactions/{id}')
   @rest.response(
     200,
@@ -166,19 +199,6 @@ export class TransactionController {
   }
 
   //? PATCH
-  // @rest.patch('patch/transactions')
-  // @rest.response(200, {
-  //   description: 'Transaction PATCH success count',
-  //   content: {'application/json': {schema: repo.CountSchema}},
-  // })
-  // async updateAll(
-  //   @getCustomRequestBody(Transaction, {partial: true})
-  //   transaction: Transaction,
-  //   @rest.param.where(Transaction) where?: repo.Where<Transaction>,
-  // ): Promise<repo.Count> {
-  //   return this.transactionRepository.updateAll(transaction, where);
-  // }
-
   @rest.patch('patch/transactions/{id}')
   @authenticate('jwt')
   @rest.response(204, {
@@ -249,7 +269,14 @@ export class TransactionController {
       await this.s3Service.deleteFileFromS3(transaction.image_description);
     }
 
-    await this.transactionRepository.deleteById(id);
+    // await this.transactionRepository.deleteById(id);
+
+    await this.transactionRepository.updateById(id, {
+      is_deleted: true,
+      updated_at: new Date().toISOString(),
+      image_description: '',
+    });
+
     return {message: 'Success'};
   }
 }

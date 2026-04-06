@@ -69,8 +69,14 @@ export class Transaction extends Entity {
     type: 'string',
   })
   reminder_id?: string;
-  // Define well-known properties here
 
+  @property({
+    type: 'boolean',
+  })
+  is_deleted?: boolean
+
+  // Define well-known properties here
+  
   // Indexer property to allow additional data
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [prop: string]: any;
