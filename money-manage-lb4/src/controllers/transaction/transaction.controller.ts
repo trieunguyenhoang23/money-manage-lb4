@@ -27,27 +27,35 @@ import {UploadFileMulterService} from '../../infrastructure/file/upload-file_mul
 import {
   UPLOAD_FILE_S3_SERVICE,
   UPLOAD_FILE_MULTER_SERVICE,
+  SYNC_NOTIFIER_SERVICE,
 } from '../../infrastructure/binding_key.infrastructure';
 import {authenticate} from '@loopback/authentication';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 import {UpdateTransactionUseCase} from '../../domain/usecase/transaction/update_transaction.usecase';
+import {SyncNotifyService} from '../../infrastructure/socket/sync_notifier.service';
 
 export class TransactionController {
   constructor(
+    // REPO
     @repo.repository(TransactionRepository)
     public transactionRepository: TransactionRepository,
+    // Use case
     @inject(CREATE_TRANSACTION_USECASE)
     private createTransactionUseCase: CreateTransactionUseCase,
+    @inject(UPDATE_TRANSACTION_USECASE)
+    private updateTransactionUseCase: UpdateTransactionUseCase,
+    // Http
     @inject(RestBindings.Http.REQUEST)
     private req: ExpressRequest,
     @inject(RestBindings.Http.RESPONSE)
     private res: ExpressResponse,
+    // Service
     @inject(UPLOAD_FILE_S3_SERVICE)
     private s3Service: UploadFileS3Service,
     @inject(UPLOAD_FILE_MULTER_SERVICE)
     private multerService: UploadFileMulterService,
-    @inject(UPDATE_TRANSACTION_USECASE)
-    private updateTransactionUseCase: UpdateTransactionUseCase,
+    @inject(SYNC_NOTIFIER_SERVICE)
+    private syncNotifyService: SyncNotifyService,
   ) {}
 
   //* GET
@@ -110,57 +118,6 @@ export class TransactionController {
     });
   }
 
-  // @rest.get('get/transactions/load_by_page')
-  // @authenticate('jwt')
-  // @rest.response(
-  //   200,
-  //   getCustomModelResponseSchema(
-  //     Transaction,
-  //     'Array of Transaction model instances',
-  //     true,
-  //     true,
-  //   ),
-  // )
-  // async findByPage(
-  //   @inject.getter(SecurityBindings.USER) getUser: repo.Getter<UserProfile>,
-  //   @rest.param.query.number('page') page: number,
-  //   @rest.param.query.number('limit_count') limit_count: number,
-  // ): Promise<Transaction[]> {
-  //   const currentUserProfile = await getUser();
-
-  //   // Extract the ID
-  //   const user_id = currentUserProfile[securityId];
-
-  //   return this.transactionRepository.find({
-  //     limit: limit_count,
-  //     skip: page * limit_count,
-  //     order: ['transaction_at desc'],
-  //     include: [
-  //       {
-  //         relation: 'category',
-  //       },
-  //     ],
-  //   });
-  // }
-
-  @rest.get('get/transactions/{id}')
-  @rest.response(
-    200,
-    getCustomModelResponseSchema(
-      Transaction,
-      'Transaction model instance',
-      false,
-      true,
-    ),
-  )
-  async findById(
-    @rest.param.path.string('id') id: string,
-    @rest.param.filter(Transaction, {exclude: 'where'})
-    filter?: repo.FilterExcludingWhere<Transaction>,
-  ): Promise<Transaction> {
-    return this.transactionRepository.findById(id, filter);
-  }
-
   //Todo: POST
   @rest.post('post/transactions')
   @authenticate('jwt')
@@ -195,6 +152,9 @@ export class TransactionController {
       newFile,
     );
 
+    // Notify websocket
+    this.syncNotifyService.notifySyncCompleted(user_id, 'transaction');
+
     return {image_description: newTransaction.image_description};
   }
 
@@ -214,6 +174,7 @@ export class TransactionController {
     @inject.getter(SecurityBindings.USER) getUser: repo.Getter<UserProfile>,
   ): Promise<any> {
     const user = await getUser();
+    const user_id = user[securityId];
 
     const files = await this.multerService.upload(
       'image_description',
@@ -222,24 +183,15 @@ export class TransactionController {
     );
     const newFile = files && files.length > 0 ? files[0] : undefined;
 
+    // Notify websocket
+    this.syncNotifyService.notifySyncCompleted(user_id, 'transaction');
+
     return await this.updateTransactionUseCase.execute(
       id,
-      user[securityId],
+      user_id,
       this.req.body,
       newFile,
     );
-  }
-
-  //Todo PUT
-  @rest.put('put/transactions/{id}')
-  @rest.response(204, {
-    description: 'Transaction PUT success',
-  })
-  async replaceById(
-    @rest.param.path.string('id') id: string,
-    @rest.requestBody() transaction: Transaction,
-  ): Promise<void> {
-    await this.transactionRepository.replaceById(id, transaction);
   }
 
   //! DELETE
@@ -269,13 +221,14 @@ export class TransactionController {
       await this.s3Service.deleteFileFromS3(transaction.image_description);
     }
 
-    // await this.transactionRepository.deleteById(id);
-
     await this.transactionRepository.updateById(id, {
       is_deleted: true,
       updated_at: new Date().toISOString(),
       image_description: '',
     });
+
+    // Notify websocket
+    this.syncNotifyService.notifySyncCompleted(user_id, 'transaction');
 
     return {message: 'Success'};
   }

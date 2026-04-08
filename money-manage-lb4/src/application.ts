@@ -1,5 +1,5 @@
 import {BootMixin} from '@loopback/boot';
-import {ApplicationConfig} from '@loopback/core';
+import {ApplicationConfig, BindingScope} from '@loopback/core';
 import {
   RestExplorerBindings,
   RestExplorerComponent,
@@ -9,17 +9,6 @@ import {RestApplication} from '@loopback/rest';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
 import {MySequence} from './sequence';
-import {VerifyAuthenticateUseCase} from './domain/usecase/user_auth/verify-authenticate.usecase';
-import {
-  CREATE_TRANSACTION_USECASE,
-  GET_FINANCIAL_DATA_USECASE,
-  GET_OVERVIEW_USECASE,
-  SPENDING_CATEGORIES_USECASE,
-  SYNC_CATEGORY_DATA_USECASE,
-  SYNC_TRANSACTION_DATA_USECASE,
-  UPDATE_TRANSACTION_USECASE,
-  VERIFY_AUTH_USECASE,
-} from './domain/usecase/binding_key.usecase';
 import {AuthenticationComponent} from '@loopback/authentication';
 import * as auth from '@loopback/authentication-jwt';
 import {MoneyManageDbDataSource} from './datasources';
@@ -28,15 +17,15 @@ import {SyncCategoryDataUseCase} from './domain/usecase/sync/sync-category-data.
 import {CreateTransactionUseCase} from './domain/usecase/transaction/create_transaction.usecase';
 import {UploadFileMulterService} from './infrastructure/file/upload-file_multer.service';
 import {UploadFileS3Service} from './infrastructure/file/upload-file-s3.service';
-import {
-  UPLOAD_FILE_MULTER_SERVICE,
-  UPLOAD_FILE_S3_SERVICE,
-} from './infrastructure/binding_key.infrastructure';
+import * as infrastructure from './infrastructure/binding_key.infrastructure';
+import {VerifyAuthenticateUseCase} from './domain/usecase/user_auth/verify-authenticate.usecase';
+import * as UseCaseKey from './domain/usecase/binding_key.usecase';
 import {UpdateTransactionUseCase} from './domain/usecase/transaction/update_transaction.usecase';
 import {SyncTransactionDataUseCase} from './domain/usecase/sync/sync-transaction-data.usecase';
-import {GetFinancialDataUseCase} from './domain/usecase/analytics/get_financial_data.usecase';
-import {SpendingCategoriesUseCase} from './domain/usecase/analytics/spending_categories.usecase';
-import {GetOverviewUseCase} from './domain/usecase/analytics/get_overview.usecase';
+import {SocketService} from './infrastructure/socket/socket.service';
+import * as UseCase from './domain/usecase/index';
+import {SyncNotifyService} from './infrastructure/socket/sync_notifier.service';
+import {SocketObserver} from './infrastructure/socket/socket.observer';
 
 export {ApplicationConfig};
 
@@ -59,10 +48,8 @@ export class MoneyMangeApplication extends BootMixin(
     this.component(RestExplorerComponent);
 
     this.projectRoot = __dirname;
-    // Customize @loopback/boot Booter Conventions here
     this.bootOptions = {
       controllers: {
-        // Customize ControllerBooter Conventions here
         dirs: ['controllers'],
         extensions: ['.controller.js'],
         nested: true,
@@ -70,22 +57,45 @@ export class MoneyMangeApplication extends BootMixin(
     };
 
     // USE CASE Binding
-    this.bind(VERIFY_AUTH_USECASE.key).toClass(VerifyAuthenticateUseCase);
-    this.bind(SYNC_CATEGORY_DATA_USECASE.key).toClass(SyncCategoryDataUseCase);
-    this.bind(SYNC_TRANSACTION_DATA_USECASE.key).toClass(
+    this.bind(UseCaseKey.VERIFY_AUTH_USECASE.key).toClass(
+      VerifyAuthenticateUseCase,
+    );
+    this.bind(UseCaseKey.SYNC_CATEGORY_DATA_USECASE.key).toClass(
+      SyncCategoryDataUseCase,
+    );
+    this.bind(UseCaseKey.SYNC_TRANSACTION_DATA_USECASE.key).toClass(
       SyncTransactionDataUseCase,
     );
-    this.bind(CREATE_TRANSACTION_USECASE.key).toClass(CreateTransactionUseCase);
-    this.bind(UPDATE_TRANSACTION_USECASE.key).toClass(UpdateTransactionUseCase);
-    this.bind(GET_FINANCIAL_DATA_USECASE.key).toClass(GetFinancialDataUseCase);
-    this.bind(SPENDING_CATEGORIES_USECASE.key).toClass(
-      SpendingCategoriesUseCase,
+    this.bind(UseCaseKey.CREATE_TRANSACTION_USECASE.key).toClass(
+      CreateTransactionUseCase,
     );
-    this.bind(GET_OVERVIEW_USECASE.key).toClass(GetOverviewUseCase);
+    this.bind(UseCaseKey.UPDATE_TRANSACTION_USECASE.key).toClass(
+      UpdateTransactionUseCase,
+    );
+    this.bind(UseCaseKey.GET_FINANCIAL_DATA_USECASE.key).toClass(
+      UseCase.GetFinancialDataUseCase,
+    );
+    this.bind(UseCaseKey.SPENDING_CATEGORIES_USECASE.key).toClass(
+      UseCase.SpendingCategoriesUseCase,
+    );
+    this.bind(UseCaseKey.GET_OVERVIEW_USECASE.key).toClass(
+      UseCase.GetOverviewUseCase,
+    );
 
     // INFRASTRUCTURE Binding
-    this.bind(UPLOAD_FILE_MULTER_SERVICE.key).toClass(UploadFileMulterService);
-    this.bind(UPLOAD_FILE_S3_SERVICE.key).toClass(UploadFileS3Service);
+    this.bind(infrastructure.UPLOAD_FILE_MULTER_SERVICE.key).toClass(
+      UploadFileMulterService,
+    );
+    this.bind(infrastructure.UPLOAD_FILE_S3_SERVICE.key).toClass(
+      UploadFileS3Service,
+    );
+    this.lifeCycleObserver(SocketObserver);
+    this.bind(infrastructure.SOCKET_SERVICE.key)
+      .toClass(SocketService)
+      .inScope(BindingScope.SINGLETON);
+    this.bind(infrastructure.SYNC_NOTIFIER_SERVICE.key)
+      .toClass(SyncNotifyService)
+      .inScope(BindingScope.SINGLETON);
 
     /// JWT Config
     this.component(AuthenticationComponent);
