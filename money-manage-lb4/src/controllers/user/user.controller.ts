@@ -27,7 +27,8 @@ export class UserController extends BaseController {
     return this.userRepository.count(where);
   }
 
-  @rest.get('get/users')
+  @rest.get('get/users/currency')
+  @authenticate('jwt')
   @rest.response(
     200,
     CustomResponseSchema.getCustomModelResponseSchema(
@@ -36,29 +37,15 @@ export class UserController extends BaseController {
       true,
     ),
   )
-  async find(
-    @rest.param.filter(Model.User) filter?: repo.Filter<Model.User>,
-  ): Promise<Model.User[]> {
-    return this.userRepository.find(filter);
+  async find(): Promise<{currency: string}> {
+    const user_id = await this.extractUserIdFromToken();
+    const user = await this.userRepository.findById(user_id);
+
+    return {
+      currency: user.currency,
+    };
   }
 
-  @rest.get('get/users/{id}')
-  @rest.response(
-    200,
-    CustomResponseSchema.getCustomModelResponseSchema(
-      Model.User,
-      'User model instance',
-      true,
-      true,
-    ),
-  )
-  async findById(
-    @rest.param.path.string('id') id: string,
-    @rest.param.filter(Model.User, {exclude: 'where'})
-    filter?: repo.FilterExcludingWhere<Model.User>,
-  ): Promise<Model.User> {
-    return this.userRepository.findById(id, filter);
-  }
   //* ------------------------------------------------- END GET -----------------------------------------------
 
   //? ------------------------------------------------- PATCH -------------------------------------------------

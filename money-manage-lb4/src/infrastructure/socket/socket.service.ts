@@ -12,7 +12,6 @@ export class SocketService {
 
   async start(httpServer: any, options?: any) {
     const nativeServer = httpServer.server;
-    console.log('Native Server Check:', !!nativeServer);
     if (!nativeServer) {
       console.error('Not found nativeServer from LoopBack HttpServer');
       return;

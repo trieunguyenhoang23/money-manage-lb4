@@ -11,6 +11,7 @@ import path from 'path';
 import {MySequence} from './sequence';
 import {registerDomainBinding} from './domain/domain-binding';
 import {registerInfrastructure} from './infrastructure/infrastructure-binding';
+import {registerCronJob} from './infrastructure/schedule/cron-job-binding';
 
 export {ApplicationConfig};
 
@@ -46,5 +47,8 @@ export class MoneyMangeApplication extends BootMixin(
 
     //* INFRASTRUCTURE Binding
     registerInfrastructure(this);
+
+    //* Cron Job binding
+    registerCronJob(this);
   }
 }

@@ -13,7 +13,7 @@ export * from './reminder/reminder.controller';
 export * from './transaction/transaction.controller';
 
 //* SYNC
-export * from './sync_data.controller';
+export * from './sync/sync_data.controller';
 
 //* ANALYTIC
 export * from './analytic/analytics_data.controller';
