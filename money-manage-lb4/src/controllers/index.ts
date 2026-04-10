@@ -1,14 +1,19 @@
 export * from './ping.controller';
-export * from './user/user-category.controller';
+//* USER
 export * from './user/user-auth-provider.controller';
-export * from './user/user-reminder.controller';
-export * from './user/user-transaction.controller';
 export * from './user/user.controller';
-export * from './category/category-reminder.controller';
-export * from './category/category-transaction.controller';
+
+//* CATEGORY
 export * from './category/category.controller';
-export * from './reminder/reminder-transaction.controller';
+
+//* REMINDER
 export * from './reminder/reminder.controller';
+
+//* TRANSACTION
 export * from './transaction/transaction.controller';
+
+//* SYNC
 export * from './sync_data.controller';
-export * from './analytics_data.controller';
+
+//* ANALYTIC
+export * from './analytic/analytics_data.controller';

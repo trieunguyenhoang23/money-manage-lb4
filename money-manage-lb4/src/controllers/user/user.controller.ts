@@ -1,27 +1,28 @@
 import * as repo from '@loopback/repository';
 import * as rest from '@loopback/rest';
-import {User} from '../../models';
-import {UserRepository} from '../../repositories';
-import {
-  getCustomModelResponseSchema,
-  getCustomCountResponseSchema,
-} from '../utils/custom-response-schema';
-import {getCustomRequestBody} from '../utils/custom-request-body';
+import * as Model from '../../models';
+import * as Repository from '../../repositories';
+import * as CustomResponseSchema from '../../utils/custom-response-schema';
+import * as CustomRequestBody from '../../utils/custom-request-body';
 import {authenticate} from '@loopback/authentication';
-import {inject} from '@loopback/core';
-import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
+import {BaseController} from '../base.controller';
 
-export class UserController {
+export class UserController extends BaseController {
   constructor(
-    @repo.repository(UserRepository)
-    public userRepository: UserRepository,
-  ) {}
+    @repo.repository(Repository.UserRepository)
+    public userRepository: Repository.UserRepository,
+  ) {
+    super();
+  }
 
-  //* GET
+  //* ----------------------------------------------- GET ---------------------------------------------------
   @rest.get('get/users/count')
-  @rest.response(200, getCustomCountResponseSchema('User model count'))
+  @rest.response(
+    200,
+    CustomResponseSchema.getCustomCountResponseSchema('User model count'),
+  )
   async count(
-    @rest.param.where(User) where?: repo.Where<User>,
+    @rest.param.where(Model.User) where?: repo.Where<Model.User>,
   ): Promise<repo.Count> {
     return this.userRepository.count(where);
   }
@@ -29,41 +30,38 @@ export class UserController {
   @rest.get('get/users')
   @rest.response(
     200,
-    getCustomModelResponseSchema(User, 'Array of User model instances', true),
+    CustomResponseSchema.getCustomModelResponseSchema(
+      Model.User,
+      'Array of User model instances',
+      true,
+    ),
   )
   async find(
-    @rest.param.filter(User) filter?: repo.Filter<User>,
-  ): Promise<User[]> {
+    @rest.param.filter(Model.User) filter?: repo.Filter<Model.User>,
+  ): Promise<Model.User[]> {
     return this.userRepository.find(filter);
   }
 
   @rest.get('get/users/{id}')
   @rest.response(
     200,
-    getCustomModelResponseSchema(User, 'User model instance', true, true),
+    CustomResponseSchema.getCustomModelResponseSchema(
+      Model.User,
+      'User model instance',
+      true,
+      true,
+    ),
   )
   async findById(
     @rest.param.path.string('id') id: string,
-    @rest.param.filter(User, {exclude: 'where'})
-    filter?: repo.FilterExcludingWhere<User>,
-  ): Promise<User> {
+    @rest.param.filter(Model.User, {exclude: 'where'})
+    filter?: repo.FilterExcludingWhere<Model.User>,
+  ): Promise<Model.User> {
     return this.userRepository.findById(id, filter);
   }
+  //* ------------------------------------------------- END GET -----------------------------------------------
 
-  //Todo POST
-  @rest.post('post/users')
-  @rest.response(200, getCustomModelResponseSchema(User, 'User model instance'))
-  async create(
-    @getCustomRequestBody(User, {
-      title: 'NewUser',
-      exclude: ['id'],
-    })
-    user: Omit<User, 'id'>,
-  ): Promise<User> {
-    return this.userRepository.create(user);
-  }
-
-  //? PATCH
+  //? ------------------------------------------------- PATCH -------------------------------------------------
   @rest.patch('patch/users')
   @authenticate('jwt')
   @rest.response(200, {
@@ -71,34 +69,12 @@ export class UserController {
     content: {'application/json': {schema: repo.CountSchema}},
   })
   async updateAll(
-    @getCustomRequestBody(User, {partial: true}) user: User,
-    @inject.getter(SecurityBindings.USER) getUser: repo.Getter<UserProfile>,
+    @CustomRequestBody.getCustomRequestBody(Model.User, {partial: true})
+    user: Model.User,
   ): Promise<any> {
-    const currentUserProfile = await getUser();
-    // Extract the ID
-    const user_id = currentUserProfile[securityId];
+    const user_id = await this.extractUserIdFromToken();
     await this.userRepository.updateById(user_id, user);
     return {message: 'Update successful'};
   }
-
-  //Todo PUT
-  @rest.put('/users/{id}')
-  @rest.response(204, {
-    description: 'User PUT success',
-  })
-  async replaceById(
-    @rest.param.path.string('id') id: string,
-    @rest.requestBody() user: User,
-  ): Promise<void> {
-    await this.userRepository.replaceById(id, user);
-  }
-
-  //! DELETE
-  @rest.del('/users/{id}')
-  @rest.response(204, {
-    description: 'User DELETE success',
-  })
-  async deleteById(@rest.param.path.string('id') id: string): Promise<void> {
-    await this.userRepository.deleteById(id);
-  }
+  //? ------------------------------------------------- END PATCH -------------------------------------------------
 }

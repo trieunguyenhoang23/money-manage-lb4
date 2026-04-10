@@ -7,13 +7,13 @@ import {
 import {RestBindings, Request} from '@loopback/rest';
 
 @injectable({
-  scope: BindingScope.SINGLETON,
+  scope: BindingScope.TRANSIENT,
   tags: {key: SYNC_NOTIFIER_SERVICE.key},
 })
 export class SyncNotifyService {
   constructor(
     @inject(SOCKET_SERVICE.key) private socketService: SocketService,
-    @inject(RestBindings.Http.REQUEST, {optional: true})
+    @inject(RestBindings.Http.REQUEST)
     private request: Request,
   ) {}
 
@@ -21,7 +21,6 @@ export class SyncNotifyService {
     if (!this.socketService.io) return;
 
     const excludeSocketId = this.request?.headers['x-socket-id'] as string;
-
     let emitter = this.socketService.io.to(userId);
 
     if (excludeSocketId) {

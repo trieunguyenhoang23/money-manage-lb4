@@ -1,31 +1,26 @@
-import {bind, BindingScope, inject} from '@loopback/core';
+import * as core from '@loopback/core';
 import * as repo from '@loopback/repository';
+import * as Authenticate from '@loopback/authentication-jwt';
+import * as Repository from '../../../repositories';
 import {securityId, UserProfile} from '@loopback/security';
 import {TokenService} from '@loopback/authentication';
-import {
-  TokenServiceBindings,
-  RefreshTokenService,
-  RefreshTokenServiceBindings,
-} from '@loopback/authentication-jwt';
-
-import {UserRepository, AuthProviderRepository} from '../../../repositories';
-import {VERIFY_AUTH_USECASE} from '../binding_key.usecase';
+import {VERIFY_AUTH_USE_CASE} from '../binding_key.usecase';
 import {User} from '../../../models';
 
-@bind({
-  scope: BindingScope.SINGLETON,
-  tags: {key: VERIFY_AUTH_USECASE.key},
+@core.bind({
+  scope: core.BindingScope.SINGLETON,
+  tags: {key: VERIFY_AUTH_USE_CASE.key},
 })
 export class VerifyAuthenticateUseCase {
   constructor(
-    @repo.repository(UserRepository)
-    protected userRepository: UserRepository,
-    @repo.repository(AuthProviderRepository)
-    protected authProviderRepository: AuthProviderRepository,
-    @inject(TokenServiceBindings.TOKEN_SERVICE)
+    @repo.repository(Repository.UserRepository)
+    protected userRepository: Repository.UserRepository,
+    @repo.repository(Repository.AuthProviderRepository)
+    protected authProviderRepository: Repository.AuthProviderRepository,
+    @core.inject(Authenticate.TokenServiceBindings.TOKEN_SERVICE)
     public jwtService: TokenService,
-    @inject(RefreshTokenServiceBindings.REFRESH_TOKEN_SERVICE)
-    public refreshTokenService: RefreshTokenService,
+    @core.inject(Authenticate.RefreshTokenServiceBindings.REFRESH_TOKEN_SERVICE)
+    public refreshTokenService: Authenticate.RefreshTokenService,
   ) {}
 
   async execute(

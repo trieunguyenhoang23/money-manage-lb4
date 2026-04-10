@@ -4,11 +4,11 @@ import {TransactionRepository} from '../../../repositories';
 import {UploadFileS3Service} from '../../../infrastructure/file/upload-file-s3.service';
 import {UploadedFileInfo} from '../../../infrastructure/file/upload-file_multer.service';
 import {UPLOAD_FILE_S3_SERVICE} from '../../../infrastructure/binding_key.infrastructure';
-import {UPDATE_TRANSACTION_USECASE} from '../binding_key.usecase';
+import {UPDATE_TRANSACTION_USE_CASE} from '../binding_key.usecase';
 
 @bind({
   scope: BindingScope.SINGLETON,
-  tags: {key: UPDATE_TRANSACTION_USECASE.key},
+  tags: {key: UPDATE_TRANSACTION_USE_CASE.key},
 })
 export class UpdateTransactionUseCase {
   constructor(

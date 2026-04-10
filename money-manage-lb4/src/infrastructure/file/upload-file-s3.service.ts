@@ -5,7 +5,6 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
   HeadObjectCommand,
-  Bucket$,
 } from '@aws-sdk/client-s3';
 import {readFile} from 'fs/promises';
 import {UPLOAD_FILE_S3_SERVICE} from '../binding_key.infrastructure';

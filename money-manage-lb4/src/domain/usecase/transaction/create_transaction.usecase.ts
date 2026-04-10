@@ -1,36 +1,33 @@
-import {bind, BindingScope} from '@loopback/core';
-import {CREATE_TRANSACTION_USECASE} from '../binding_key.usecase';
-import {repository} from '@loopback/repository';
-import {TransactionRepository} from '../../../repositories';
 import * as core from '@loopback/core';
+import * as UseCaseKey from '../binding_key.usecase';
+import * as Infrastructure from '../../../infrastructure/index';
+import * as InfrastructureKey from '../../../infrastructure/binding_key.infrastructure';
+import {repository} from '@loopback/repository';
+import * as Repository from '../../../repositories';
 import {Transaction} from '../../../models';
-import {UploadedFileInfo} from '../../../infrastructure/file/upload-file_multer.service';
-import {UploadFileS3Service} from '../../../infrastructure/file/upload-file-s3.service';
-import {UPLOAD_FILE_S3_SERVICE} from '../../../infrastructure/binding_key.infrastructure';
 
-@bind({
-  scope: BindingScope.SINGLETON,
-  tags: {key: CREATE_TRANSACTION_USECASE.key},
+@core.bind({
+  scope: core.BindingScope.SINGLETON,
+  tags: {key: UseCaseKey.CREATE_TRANSACTION_USE_CASE.key},
 })
 export class CreateTransactionUseCase {
   constructor(
-    @repository(TransactionRepository)
-    public transactionRepository: TransactionRepository,
-    @core.inject(UPLOAD_FILE_S3_SERVICE)
-    public s3Service: UploadFileS3Service,
+    @repository(Repository.TransactionRepository)
+    public transactionRepository: Repository.TransactionRepository,
+    @core.inject(InfrastructureKey.UPLOAD_FILE_S3_SERVICE)
+    public s3Service: Infrastructure.UploadFileS3Service,
   ) {}
 
   async execute(
     body: any,
     user_id: string,
-    uploadFileMulter?: UploadedFileInfo,
-
+    uploadFileMulter?: Infrastructure.UploadedFileInfo,
   ) {
     let imageDescriptionUrl: string | undefined;
     if (uploadFileMulter) {
       const uploadedFileS3 = await this.s3Service.uploadFileToS3(
         uploadFileMulter,
-        //Folder lưu trữ trên S3
+        //Folder store in S3
         'money-manage/image_description',
       );
       imageDescriptionUrl = uploadedFileS3.path;

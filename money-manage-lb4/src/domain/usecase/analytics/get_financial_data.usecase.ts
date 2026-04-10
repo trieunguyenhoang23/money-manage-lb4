@@ -1,5 +1,5 @@
 import {bind, BindingScope} from '@loopback/core';
-import {GET_FINANCIAL_DATA_USECASE} from '../binding_key.usecase';
+import {GET_FINANCIAL_DATA_USE_CASE} from '../binding_key.usecase';
 import * as repo from '@loopback/repository';
 import {UserRepository} from '@loopback/authentication-jwt';
 import {HttpErrors} from '@loopback/rest';
@@ -7,7 +7,7 @@ import {Transaction} from '../../../models';
 
 @bind({
   scope: BindingScope.SINGLETON,
-  tags: {key: GET_FINANCIAL_DATA_USECASE.key},
+  tags: {key: GET_FINANCIAL_DATA_USE_CASE.key},
 })
 export class GetFinancialDataUseCase {
   constructor(

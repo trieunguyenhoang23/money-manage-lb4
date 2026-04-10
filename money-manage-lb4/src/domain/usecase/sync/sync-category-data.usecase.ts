@@ -1,11 +1,11 @@
 import {bind, BindingScope} from '@loopback/core';
-import {SYNC_CATEGORY_DATA_USECASE} from '../binding_key.usecase';
+import {SYNC_CATEGORY_DATA_USE_CASE} from '../binding_key.usecase';
 import {repository} from '@loopback/repository';
 import {CategoryRepository} from '../../../repositories';
 
 @bind({
   scope: BindingScope.SINGLETON,
-  tags: {key: SYNC_CATEGORY_DATA_USECASE.key},
+  tags: {key: SYNC_CATEGORY_DATA_USE_CASE.key},
 })
 export class SyncCategoryDataUseCase {
   constructor(

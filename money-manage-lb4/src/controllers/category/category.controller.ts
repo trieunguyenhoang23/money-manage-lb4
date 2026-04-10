@@ -1,29 +1,35 @@
 import * as repo from '@loopback/repository';
 import * as rest from '@loopback/rest';
-import {Getter} from '@loopback/core';
-import {Category} from '../../models';
-import {CategoryRepository} from '../../repositories';
-import {
-  getCustomCountResponseSchema,
-  getCustomModelResponseSchema,
-} from '../utils/custom-response-schema';
-import {getCustomRequestBody} from '../utils/custom-request-body';
-import {inject} from '@loopback/core';
-import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
+import * as core from '@loopback/core';
+import * as Model from '../../models';
+import * as Repository from '../../repositories';
+import * as CustomResponseSchema from '../../utils/custom-response-schema';
+import * as CustomRequestBody from '../../utils/custom-request-body';
+import * as InfrastructureKey from '../../infrastructure/binding_key.infrastructure';
+import * as Infrastructure from '../../infrastructure/index';
 import {authenticate} from '@loopback/authentication';
 import {TransactionType} from '../../domain/enums/transaction-type.enum';
+import {BaseController} from '../base.controller';
 
-export class CategoryController {
+export class CategoryController extends BaseController {
   constructor(
-    @repo.repository(CategoryRepository)
-    public categoryRepository: CategoryRepository,
-  ) {}
+    //* Repository
+    @repo.repository(Repository.CategoryRepository)
+    public categoryRepository: Repository.CategoryRepository,
+    @core.inject(InfrastructureKey.SYNC_NOTIFIER_SERVICE)
+    private syncNotifyService: Infrastructure.SyncNotifyService,
+  ) {
+    super();
+  }
 
-  //* GET
+  //* -------------------------------------------- GET --------------------------------------------
   @rest.get('get/categories/count')
-  @rest.response(200, getCustomCountResponseSchema('Category model count'))
+  @rest.response(
+    200,
+    CustomResponseSchema.getCustomCountResponseSchema('Category model count'),
+  )
   async count(
-    @rest.param.where(Category) where?: repo.Where<Category>,
+    @rest.param.where(Model.Category) where?: repo.Where<Model.Category>,
   ): Promise<repo.Count> {
     return this.categoryRepository.count(where);
   }
@@ -32,23 +38,19 @@ export class CategoryController {
   @authenticate('jwt')
   @rest.response(
     200,
-    getCustomModelResponseSchema(
-      Category,
+    CustomResponseSchema.getCustomModelResponseSchema(
+      Model.Category,
       'Array of Category model instances',
       true,
       true,
     ),
   )
   async find(
-    @inject.getter(SecurityBindings.USER) getUser: Getter<UserProfile>,
     @rest.param.query.number('page') page: number,
     @rest.param.query.number('limit_count') limit_count: number,
     @rest.param.query.string('type') type?: TransactionType,
-  ): Promise<Category[]> {
-    const currentUserProfile = await getUser();
-
-    // Extract the ID
-    const user_id = currentUserProfile[securityId];
+  ): Promise<Model.Category[]> {
+    const user_id = await this.extractUserIdFromToken();
 
     const filter: any = {user_id};
 
@@ -64,90 +66,50 @@ export class CategoryController {
     });
   }
 
-  @rest.get('get/categories/{id}')
-  @rest.response(
-    200,
-    getCustomModelResponseSchema(
-      Category,
-      'Category model instance',
-      false,
-      true,
-    ),
-  )
-  async findById(
-    @rest.param.path.string('id') id: string,
-    @rest.param.filter(Category, {exclude: 'where'})
-    filter?: repo.FilterExcludingWhere<Category>,
-  ): Promise<Category> {
-    return this.categoryRepository.findById(id, filter);
-  }
+  //* -------------------------------------------- END GET ---------------------------------------------
 
-  //Todo POST
+  //Todo: ----------------------------------------- POST -----------------------------------------------
   @rest.post('post/categories')
   @authenticate('jwt')
   @rest.response(
     200,
-    getCustomModelResponseSchema(Category, 'Category model instance', false),
+    CustomResponseSchema.getCustomModelResponseSchema(
+      Model.Category,
+      'Category model instance',
+      false,
+    ),
   )
   async create(
-    @inject.getter(SecurityBindings.USER) getUser: Getter<UserProfile>,
-    @getCustomRequestBody(Category, {
+    @CustomRequestBody.getCustomRequestBody(Model.Category, {
       title: 'NewCategory',
     })
-    category: Category,
-  ): Promise<Category> {
-    const currentUserProfile = await getUser();
-    // Extract the ID
-    const user_id = currentUserProfile[securityId];
+    category: Model.Category,
+  ): Promise<any> {
+    const user_id = await this.extractUserIdFromToken();
 
     category.user_id = user_id;
-    return this.categoryRepository.create(category);
+    await this.categoryRepository.create(category);
+    this.syncNotifyService.notifySyncCompleted(user_id, 'category');
+    return {message: 'Success'};
   }
+  //Todo: -------------------------------------------- END POST --------------------------------------------
 
-  //? PATCH
-  @rest.patch('patch/categories')
-  @rest.response(
-    200,
-    getCustomCountResponseSchema('Category PATCH success count'),
-  )
-  async updateAll(
-    @getCustomRequestBody(Category, {partial: true})
-    category: Category,
-    @rest.param.where(Category) where?: repo.Where<Category>,
-  ): Promise<repo.Count> {
-    return this.categoryRepository.updateAll(category, where);
-  }
-
+  //? ------------------------------------------------- PATCH -------------------------------------------------
   @rest.patch('patch/categories/{id}')
   @authenticate('jwt')
-  @rest.response(204, getCustomCountResponseSchema('Category PATCH success'))
+  @rest.response(
+    204,
+    CustomResponseSchema.getCustomCountResponseSchema('Category PATCH success'),
+  )
   async updateById(
-    @inject.getter(SecurityBindings.USER) getUser: Getter<UserProfile>,
     @rest.param.path.string('id') id: string,
-    @getCustomRequestBody(Category, {partial: true})
-    category: Category,
+    @CustomRequestBody.getCustomRequestBody(Model.Category, {partial: true})
+    category: Model.Category,
   ): Promise<void> {
-    const currentUserProfile = await getUser();
-    // Extract the ID
-    const user_id = currentUserProfile[securityId];
+    const user_id = await this.extractUserIdFromToken();
 
     await this.categoryRepository.updateById(id, category);
+    this.syncNotifyService.notifySyncCompleted(user_id, 'category');
   }
-
-  //Todo PUT
-  @rest.put('patch/categories/{id}')
-  @rest.response(204, getCustomCountResponseSchema('Category PUT success'))
-  async replaceById(
-    @rest.param.path.string('id') id: string,
-    @rest.requestBody() category: Category,
-  ): Promise<void> {
-    await this.categoryRepository.replaceById(id, category);
-  }
-
-  //! DELETE
-  @rest.del('delete/categories/{id}')
-  @rest.response(204, getCustomCountResponseSchema('Category DELETE success'))
-  async deleteById(@rest.param.path.string('id') id: string): Promise<void> {
-    await this.categoryRepository.deleteById(id);
-  }
+  //? ------------------------------------------------- END PATCH -------------------------------------------------
 }

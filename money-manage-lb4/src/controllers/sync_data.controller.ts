@@ -5,7 +5,7 @@ import {Category, Reminder, Transaction} from '../models';
 import {
   getCustomRequestBody,
   MultipartFormDataRequest,
-} from './utils/custom-request-body';
+} from '../utils/custom-request-body';
 import * as usecase from '../domain/usecase/binding_key.usecase';
 import {SyncCategoryDataUseCase} from '../domain/usecase/sync/sync-category-data.usecase';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
@@ -19,15 +19,15 @@ import {UploadFileMulterService} from '../infrastructure/file/upload-file_multer
 import * as infra from '../infrastructure/binding_key.infrastructure';
 import {RestBindings} from '@loopback/rest';
 import {SyncTransactionDataUseCase} from '../domain/usecase/sync/sync-transaction-data.usecase';
-import {getCustomModelResponseSchema} from './utils/custom-response-schema';
+import {getCustomModelResponseSchema} from '../utils/custom-response-schema';
 import {repository} from '@loopback/repository';
 import {CategoryRepository, TransactionRepository} from '../repositories';
 
 export class SyncDataController {
   constructor(
-    @inject(usecase.SYNC_CATEGORY_DATA_USECASE)
+    @inject(usecase.SYNC_CATEGORY_DATA_USE_CASE)
     private syncUserDataUseCase: SyncCategoryDataUseCase,
-    @inject(usecase.SYNC_TRANSACTION_DATA_USECASE)
+    @inject(usecase.SYNC_TRANSACTION_DATA_USE_CASE)
     private syncTransactionUseCase: SyncTransactionDataUseCase,
     @inject(RestBindings.Http.REQUEST)
     private req: ExpressRequest,
@@ -71,7 +71,8 @@ export class SyncDataController {
     const user_id = currentUserProfile[securityId];
 
     const whereFilter: any = {
-      user_id: user_id,
+      user_id,
+      is_deleted: {neq: true},
     };
 
     if (last_time_sync) {

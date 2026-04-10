@@ -1,12 +1,12 @@
 import {bind, BindingScope} from '@loopback/core';
-import {GET_OVERVIEW_USECASE} from '../binding_key.usecase';
+import {GET_OVERVIEW_USE_CASE} from '../binding_key.usecase';
 import {repository} from '@loopback/repository';
 import {TransactionRepository} from '../../../repositories';
 const {ObjectId} = require('mongodb');
 
 @bind({
   scope: BindingScope.SINGLETON,
-  tags: {key: GET_OVERVIEW_USECASE.key},
+  tags: {key: GET_OVERVIEW_USE_CASE.key},
 })
 export class GetOverviewUseCase {
   constructor(

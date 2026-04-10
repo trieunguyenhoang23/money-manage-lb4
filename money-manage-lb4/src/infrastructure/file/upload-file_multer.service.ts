@@ -1,8 +1,8 @@
 import {BindingScope, injectable} from '@loopback/core';
 import multer from 'multer';
-import {v4 as uuidv4} from 'uuid';
 import * as path from 'path';
 import * as fs from 'fs';
+
 import type {
   Request as ExpressRequest,
   Response as ExpressResponse,
@@ -44,21 +44,17 @@ export class UploadFileMulterService {
     return multer({storage});
   }
 
-  /**
-   * API gọn cho mọi nơi: chỉ cần gọi upload('wallpapers', req, res)
-   */
   async upload(
     targetFolder: string,
     req: ExpressRequest,
     res: ExpressResponse,
   ): Promise<UploadedFileInfo[]> {
-    //Tạo folder
     this.ensureFolder(targetFolder);
 
-    //Cấu hình multer
+    // Config multer
     const m = this.buildMulter(targetFolder);
 
-    //Parse stream sang req.files và req.body.
+    //Parse stream sang req.files and req.body.
     return new Promise<UploadedFileInfo[]>((resolve, reject) => {
       m.any()(req as any, res as any, (err: any) => {
         if (err) return reject(err);

@@ -1,5 +1,5 @@
 import {bind, BindingScope, inject} from '@loopback/core';
-import {SPENDING_CATEGORIES_USECASE} from '../binding_key.usecase';
+import {SPENDING_CATEGORIES_USE_CASE} from '../binding_key.usecase';
 import {repository} from '@loopback/repository';
 import {UserRepository} from '@loopback/authentication-jwt';
 import {HttpErrors} from '@loopback/rest';
@@ -8,7 +8,7 @@ import {TransactionType} from '../../enums/transaction-type.enum';
 
 @bind({
   scope: BindingScope.SINGLETON,
-  tags: {key: SPENDING_CATEGORIES_USECASE.key},
+  tags: {key: SPENDING_CATEGORIES_USE_CASE.key},
 })
 export class SpendingCategoriesUseCase {
   constructor(

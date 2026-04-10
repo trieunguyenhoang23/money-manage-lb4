@@ -1,50 +1,50 @@
 import {BindingKey} from '@loopback/core';
-import {VerifyAuthenticateUseCase} from '../../domain/usecase/user_auth/verify-authenticate.usecase';
-import {CreateTransactionUseCase} from './transaction/create_transaction.usecase';
-import {SyncCategoryDataUseCase} from './sync/sync-category-data.usecase';
-import {UpdateTransactionUseCase} from './transaction/update_transaction.usecase';
-import {SyncTransactionDataUseCase} from './sync/sync-transaction-data.usecase';
-import {GetFinancialDataUseCase} from './analytics/get_financial_data.usecase';
+import * as UseCase from '././index';
 
-// USER AUTH
-export const VERIFY_AUTH_USECASE = BindingKey.create<VerifyAuthenticateUseCase>(
-  'usecases.VerifyAuthenticateUseCase',
-);
-
-// SYNC
-export const SYNC_CATEGORY_DATA_USECASE =
-  BindingKey.create<SyncCategoryDataUseCase>(
-    'usecases.SyncCategoryDataUseCase',
+//* USER AUTH
+export const VERIFY_AUTH_USE_CASE =
+  BindingKey.create<UseCase.VerifyAuthenticateUseCase>(
+    'UseCase.VerifyAuthenticateUseCase',
   );
 
-export const SYNC_TRANSACTION_DATA_USECASE =
-  BindingKey.create<SyncTransactionDataUseCase>(
-    'usecases.SyncTransactionDataUseCase',
+//* SYNC
+export const SYNC_CATEGORY_DATA_USE_CASE =
+  BindingKey.create<UseCase.SyncCategoryDataUseCase>(
+    'UseCase.SyncCategoryDataUseCase',
   );
 
-// TRANSACTION
-export const CREATE_TRANSACTION_USECASE =
-  BindingKey.create<CreateTransactionUseCase>(
-    'usecases.CreateTransactionUseCase',
+export const SYNC_TRANSACTION_DATA_USE_CASE =
+  BindingKey.create<UseCase.SyncTransactionDataUseCase>(
+    'UseCase.SyncTransactionDataUseCase',
   );
 
-export const UPDATE_TRANSACTION_USECASE =
-  BindingKey.create<UpdateTransactionUseCase>(
-    'usecases.UpdateTransactionUseCase',
+//* TRANSACTION
+export const CREATE_TRANSACTION_USE_CASE =
+  BindingKey.create<UseCase.CreateTransactionUseCase>(
+    'UseCase.CreateTransactionUseCase',
   );
 
-// ANALYTIC
-export const GET_FINANCIAL_DATA_USECASE =
-  BindingKey.create<GetFinancialDataUseCase>(
-    'usecases.GetFinancialDataUseCase',
+export const UPDATE_TRANSACTION_USE_CASE =
+  BindingKey.create<UseCase.UpdateTransactionUseCase>(
+    'UseCase.UpdateTransactionUseCase',
+  );
+export const DELETE_TRANSACTION_USE_CASE =
+  BindingKey.create<UseCase.DeleteTransactionUseCase>(
+    'UseCase.DeleteTransactionUseCase',
   );
 
-export const SPENDING_CATEGORIES_USECASE =
-  BindingKey.create<GetFinancialDataUseCase>(
-    'usecases.SpendingCategoriesUseCase',
+//* ANALYTIC
+export const GET_FINANCIAL_DATA_USE_CASE =
+  BindingKey.create<UseCase.GetFinancialDataUseCase>(
+    'UseCase.GetFinancialDataUseCase',
   );
 
-export const GET_OVERVIEW_USECASE =
-  BindingKey.create<GetFinancialDataUseCase>(
-    'usecases.SpendingCategoriesUseCase',
+export const SPENDING_CATEGORIES_USE_CASE =
+  BindingKey.create<UseCase.GetFinancialDataUseCase>(
+    'UseCase.SpendingCategoriesUseCase',
+  );
+
+export const GET_OVERVIEW_USE_CASE =
+  BindingKey.create<UseCase.GetFinancialDataUseCase>(
+    'UseCase.SpendingCategoriesUseCase',
   );

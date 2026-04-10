@@ -1,5 +1,5 @@
 import {bind, BindingScope, inject} from '@loopback/core';
-import {SYNC_TRANSACTION_DATA_USECASE} from '../binding_key.usecase';
+import {SYNC_TRANSACTION_DATA_USE_CASE} from '../binding_key.usecase';
 import {repository} from '@loopback/repository';
 import {TransactionRepository} from '../../../repositories';
 import {UploadFileS3Service} from '../../../infrastructure/file/upload-file-s3.service';
@@ -8,7 +8,7 @@ import {Transaction} from '../../../models';
 
 @bind({
   scope: BindingScope.SINGLETON,
-  tags: {key: SYNC_TRANSACTION_DATA_USECASE.key},
+  tags: {key: SYNC_TRANSACTION_DATA_USE_CASE.key},
 })
 export class SyncTransactionDataUseCase {
   constructor(
