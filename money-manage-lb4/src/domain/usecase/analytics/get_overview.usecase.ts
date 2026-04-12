@@ -25,10 +25,8 @@ export class GetOverviewUseCase {
       groupBy = 'day';
     } else if (diffInDays <= 900) {
       groupBy = 'month';
-      format = '%Y-%m';
     } else {
       groupBy = 'year';
-      format = '%Y';
     }
 
     const collection = (
@@ -69,7 +67,10 @@ export class GetOverviewUseCase {
               {
                 $group: {
                   _id: {
-                    $dateToString: {format: format, date: '$transaction_at'},
+                    $dateTrunc: {
+                      date: '$transaction_at',
+                      unit: groupBy, // 'day', 'month', or 'year'
+                    },
                   },
                   income: {
                     $sum: {$cond: [{$eq: ['$type', 'INCOME']}, '$amount', 0]},
@@ -77,6 +78,15 @@ export class GetOverviewUseCase {
                   expense: {
                     $sum: {$cond: [{$eq: ['$type', 'EXPENSE']}, '$amount', 0]},
                   },
+                },
+              },
+              {
+                $project: {
+                  _id: {
+                    $dateToString: {format: '%Y-%m-%d', date: '$_id'},
+                  },
+                  income: 1,
+                  expense: 1,
                 },
               },
               {$sort: {_id: 1}},
