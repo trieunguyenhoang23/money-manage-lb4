@@ -40,11 +40,11 @@ export const GET_FINANCIAL_DATA_USE_CASE =
   );
 
 export const SPENDING_CATEGORIES_USE_CASE =
-  BindingKey.create<UseCase.GetFinancialDataUseCase>(
+  BindingKey.create<UseCase.SpendingCategoriesUseCase>(
     'UseCase.SpendingCategoriesUseCase',
   );
 
 export const GET_OVERVIEW_USE_CASE =
-  BindingKey.create<UseCase.GetFinancialDataUseCase>(
-    'UseCase.SpendingCategoriesUseCase',
+  BindingKey.create<UseCase.GetOverviewUseCase>(
+    'UseCase.GetOverviewUseCase',
   );

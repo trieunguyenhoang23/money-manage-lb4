@@ -41,6 +41,7 @@ export class SpendingCategoriesUseCase {
             where: {
               type: type,
               ...dateFilter,
+              is_deleted: {neq: true},
             },
           },
         },
@@ -53,24 +54,26 @@ export class SpendingCategoriesUseCase {
     const categories = user?.categories || [];
     const transactions = user?.transactions || [];
 
-    const categoriesAnalytics = categories.map((category: Category) => {
-      const relatedTransactions = transactions.filter(
-        (tx: Transaction) => tx.category_id == category.id,
-      );
+    const categoriesAnalytics = categories
+      .map((category: Category) => {
+        const relatedTransactions = transactions.filter(
+          (tx: Transaction) => tx.category_id == category.id,
+        );
 
-      const totalAmount = relatedTransactions.reduce(
-        (sum: number, t: Transaction) => sum + (t.amount || 0),
-        0,
-      );
+        const totalAmount = relatedTransactions.reduce(
+          (sum: number, t: Transaction) => sum + (t.amount || 0),
+          0,
+        );
 
-      return {
-        id: category.id,
-        name: category.name,
-        type: category.type,
-        totalAmount: totalAmount,
-        transactionCount: relatedTransactions.length,
-      };
-    });
+        return {
+          id: category.id,
+          name: category.name,
+          type: category.type,
+          totalAmount: totalAmount,
+          transactionCount: relatedTransactions.length,
+        };
+      })
+      .filter((analytics: any) => analytics.totalAmount > 0);
 
     return categoriesAnalytics;
   }

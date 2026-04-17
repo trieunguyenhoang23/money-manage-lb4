@@ -14,33 +14,24 @@ export class GetOverviewUseCase {
     private transactionRepository: TransactionRepository,
   ) {}
 
-  async execute(user_id: string, startDate: Date, endDate: Date) {
-    const diffInDays =
-      (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
-
-    let groupBy: 'day' | 'month' | 'year';
-    let format = '%Y-%m-%d';
-
-    if (diffInDays <= 31) {
-      groupBy = 'day';
-    } else if (diffInDays <= 900) {
-      groupBy = 'month';
-    } else {
-      groupBy = 'year';
-    }
-
+  async execute(
+    user_id: string,
+    startDate: Date,
+    endDate: Date,
+    groupBy: string,
+  ) {
     const collection = (
       this.transactionRepository.dataSource.connector as any
     ).collection('Transaction');
 
+    //* Create pipeline
     const [result] = await collection
       .aggregate([
-        {$match: {user_id: new ObjectId(user_id)}},
+        {$match: {user_id: new ObjectId(user_id), is_deleted: {$ne: true}}},
         {
           $facet: {
-            // Calculate starting totals for everything BEFORE startDate
             initialTotals: [
-              {$match: {transaction_at: {$lt: startDate}}},
+              {$match: {transaction_at: {$lt: startDate}}}, // Less than start date
               {
                 $group: {
                   _id: null,
@@ -50,15 +41,6 @@ export class GetOverviewUseCase {
                   totalExpense: {
                     $sum: {$cond: [{$eq: ['$type', 'EXPENSE']}, '$amount', 0]},
                   },
-                  totalBalance: {
-                    $sum: {
-                      $cond: [
-                        {$eq: ['$type', 'INCOME']},
-                        '$amount',
-                        {$subtract: [0, '$amount']},
-                      ],
-                    },
-                  },
                 },
               },
             ],
@@ -66,12 +48,7 @@ export class GetOverviewUseCase {
               {$match: {transaction_at: {$gte: startDate, $lte: endDate}}},
               {
                 $group: {
-                  _id: {
-                    $dateTrunc: {
-                      date: '$transaction_at',
-                      unit: groupBy, // 'day', 'month', or 'year'
-                    },
-                  },
+                  _id: {$dateTrunc: {date: '$transaction_at', unit: groupBy}},
                   income: {
                     $sum: {$cond: [{$eq: ['$type', 'INCOME']}, '$amount', 0]},
                   },
@@ -80,63 +57,38 @@ export class GetOverviewUseCase {
                   },
                 },
               },
+              {$sort: {_id: 1}}, // ASC
               {
                 $project: {
-                  _id: {
-                    $dateToString: {format: '%Y-%m-%d', date: '$_id'},
-                  },
+                  label: {$dateToString: {format: '%Y-%m-%d', date: '$_id'}},
                   income: 1,
                   expense: 1,
                 },
               },
-              {$sort: {_id: 1}},
             ],
           },
         },
       ])
       .toArray();
 
-    // Initialize running totals from the Past
     let runningIncome = result.initialTotals?.[0]?.totalIncome ?? 0;
     let runningExpense = result.initialTotals?.[0]?.totalExpense ?? 0;
-    let runningBalance = result.initialTotals?.[0]?.totalBalance ?? 0;
 
-    // Transform data using Cumulative Logic
-    const data: any[] = [];
-
-    result.chartData.forEach((item: any, index: number) => {
+    const finalData = result.chartData.map((item: any) => {
+      // Cumulative (In = Σ Income, En = Σ Expense)
       runningIncome += item.income;
       runningExpense += item.expense;
-      runningBalance += item.income - item.expense;
 
-      let trend: 'up' | 'down' | 'flatten' | 'none';
-
-      if (index === 0) {
-        trend = 'none';
-      } else {
-        const previousBalance = data[index - 1].balance;
-
-        if (runningBalance > previousBalance) {
-          trend = 'up';
-        } else if (runningBalance < previousBalance) {
-          trend = 'down';
-        } else {
-          trend = 'flatten';
-        }
-      }
-
-      data.push({
-        label: item._id,
+      return {
+        label: item.label,
         income: runningIncome,
         expense: runningExpense,
-        balance: runningBalance,
-        trend,
-      });
+      };
     });
 
     return {
       groupType: groupBy,
-      data,
+      data: finalData,
     };
   }
 }

@@ -1,6 +1,6 @@
 import {belongsTo, Entity, model, property} from '@loopback/repository';
 import {TransactionType} from '../domain/enums/transaction-type.enum';
-import { Category } from './category.model';
+import {Category} from './category.model';
 
 @model({settings: {strict: false}})
 export class Transaction extends Entity {
@@ -66,17 +66,12 @@ export class Transaction extends Entity {
   category_id: string;
 
   @property({
-    type: 'string',
-  })
-  reminder_id?: string;
-
-  @property({
     type: 'boolean',
   })
-  is_deleted?: boolean
+  is_deleted?: boolean;
 
   // Define well-known properties here
-  
+
   // Indexer property to allow additional data
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [prop: string]: any;

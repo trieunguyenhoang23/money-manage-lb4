@@ -57,6 +57,7 @@ export class AnalyticsDataController extends BaseController {
   async getOverviewAnalytic(
     @rest.param.query.string('startDate') startDate: string,
     @rest.param.query.string('endDate') endDate: string,
+    @rest.param.query.string('groupBy') groupBy: string,
   ) {
     const user_id = await this.extractUserIdFromToken();
 
@@ -68,6 +69,7 @@ export class AnalyticsDataController extends BaseController {
       user_id,
       startDateFormat,
       endDateFormat,
+      groupBy,
     );
   }
 

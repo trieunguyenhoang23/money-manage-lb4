@@ -74,7 +74,6 @@ export class SyncDataController extends BaseController {
 
     const whereFilter: any = {
       user_id,
-      is_deleted: {neq: true},
     };
 
     if (last_time_sync) {

@@ -111,5 +111,6 @@ export class CategoryController extends BaseController {
     await this.categoryRepository.updateById(id, category);
     this.syncNotifyService.notifySyncCompleted(user_id, 'category');
   }
+
   //? ------------------------------------------------- END PATCH -------------------------------------------------
 }
