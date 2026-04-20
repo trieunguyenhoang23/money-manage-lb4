@@ -96,7 +96,6 @@ export class UserAuthProviderController extends BaseController {
         });
         if (this.socketService && this.socketService.io) {
           this.socketService.io.in(user_id).disconnectSockets(true);
-          console.log(`🔌 Disconnected all sockets for user: ${user_id}`);
         }
       }
 

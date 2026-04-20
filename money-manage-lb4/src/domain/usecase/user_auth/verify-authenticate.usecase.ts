@@ -32,6 +32,7 @@ export class VerifyAuthenticateUseCase {
       provider_type,
       avatar_url,
       display_name,
+      currency,
     } = requestBody;
 
     // 1. Resolve the User
@@ -41,6 +42,7 @@ export class VerifyAuthenticateUseCase {
       provider_type,
       avatar_url,
       display_name,
+      currency,
     });
 
     // 2. Prepare the User Profile for JWT
@@ -90,6 +92,7 @@ export class VerifyAuthenticateUseCase {
         avatar_url: data.avatar_url,
         primary_email: data.provider_email,
         created_at: now,
+        currency: data.currency,
       });
     }
 

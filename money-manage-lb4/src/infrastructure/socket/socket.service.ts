@@ -45,12 +45,9 @@ export class SocketService {
 
       if (userId) {
         socket.join(userId); // let user join their own room
-        console.log(`✅ Socket connected: ${socket.id} - User: ${userId}`);
       }
 
-      socket.on('disconnect', () => {
-        console.log(`❌ User ${userId} disconnected`);
-      });
+      socket.on('disconnect', () => {});
     });
   }
 }

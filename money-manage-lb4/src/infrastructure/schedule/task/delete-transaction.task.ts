@@ -23,10 +23,6 @@ export class DeleteTransactionTask {
         is_deleted: true,
         updated_at: {lt: oneDayAgo},
       } as any);
-
-      console.log(
-        `Successfully purged ${result.count} soft-deleted transactions.`,
-      );
     } catch (err) {
       console.error('Failed to purge transactions:', err);
     }

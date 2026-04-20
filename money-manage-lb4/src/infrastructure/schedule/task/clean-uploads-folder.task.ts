@@ -35,11 +35,7 @@ export class CleanUploadsFolderTask {
         }),
       );
     } catch (err) {
-      if (err.code === 'ENOENT') {
-        console.log('Uploads folder not found, skipping.');
-      } else {
-        throw err;
-      }
+      throw err;
     }
   }
 }
